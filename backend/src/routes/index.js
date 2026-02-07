@@ -2,8 +2,7 @@ const express = require('express');
 
 const router = express.Router();
 
-// Route modules will be added as they are created:
-// router.use('/auth', require('./authRoutes'));
+router.use('/auth', require('./authRoutes'));
 // router.use('/users', require('./userRoutes'));
 // router.use('/routes', require('./routeRoutes'));
 // router.use('/reports', require('./reportRoutes'));
