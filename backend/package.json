@@ -7,10 +7,10 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "jest --runInBand",
-    "test:unit": "jest --testPathPattern=tests/unit",
-    "test:integration": "jest --testPathPattern=tests/integration --runInBand",
-    "test:coverage": "jest --coverage --runInBand",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest --runInBand",
+    "test:unit": "NODE_OPTIONS='--experimental-vm-modules' jest --testPathPattern=tests/unit",
+    "test:integration": "NODE_OPTIONS='--experimental-vm-modules' jest --testPathPattern=tests/integration --runInBand",
+    "test:coverage": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage --runInBand",
     "test:perf": "artillery run tests/performance/load-test.yml --output tests/performance/report.json",
     "test:perf:report": "artillery report tests/performance/report.json",
     "test:stress": "artillery run tests/performance/stress-test.yml"
