@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const { DIFFICULTY, SURFACE_TYPES } = require('../utils/constants');
+import mongoose from 'mongoose';
+import { DIFFICULTY, SURFACE_TYPES } from '../utils/constants.js';
 
 const waypointSchema = new mongoose.Schema(
   {
@@ -111,12 +111,11 @@ const routeSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Text index for search
 routeSchema.index({ title: 'text', description: 'text', tags: 'text' });
-
-// Compound indexes for common queries
 routeSchema.index({ difficulty: 1, safetyRating: -1 });
 routeSchema.index({ createdBy: 1 });
 routeSchema.index({ isActive: 1, createdAt: -1 });
 
-module.exports = mongoose.model('Route', routeSchema);
+const Route = mongoose.model('Route', routeSchema);
+
+export default Route;

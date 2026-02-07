@@ -1,15 +1,15 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const cookieParser = require('cookie-parser');
-const swaggerUi = require('swagger-ui-express');
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import cookieParser from 'cookie-parser';
+import swaggerUi from 'swagger-ui-express';
 
-const corsOptions = require('./config/cors');
-const swaggerSpec = require('./config/swagger');
-const { generalLimiter } = require('./middleware/rateLimiter');
-const errorHandler = require('./middleware/errorHandler');
-const routes = require('./routes');
+import corsOptions from './config/cors.js';
+import swaggerSpec from './config/swagger.js';
+import { generalLimiter } from './middleware/rateLimiter.js';
+import errorHandler from './middleware/errorHandler.js';
+import routes from './routes/index.js';
 
 const app = express();
 
@@ -47,4 +47,4 @@ app.use((req, res) => {
 // Global error handler
 app.use(errorHandler);
 
-module.exports = app;
+export default app;

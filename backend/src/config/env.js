@@ -1,5 +1,9 @@
-const dotenv = require('dotenv');
-const path = require('path');
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
@@ -15,7 +19,7 @@ if (missing.length > 0) {
   throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
 }
 
-module.exports = {
+export default {
   nodeEnv: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT, 10) || 5000,
   mongoUri: process.env.MONGODB_URI,

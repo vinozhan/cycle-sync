@@ -1,9 +1,9 @@
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-const User = require('../models/User');
-const ApiError = require('../utils/ApiError');
-const env = require('../config/env');
-const { JWT } = require('../utils/constants');
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import User from '../models/User.js';
+import ApiError from '../utils/ApiError.js';
+import env from '../config/env.js';
+import { JWT } from '../utils/constants.js';
 
 const generateAccessToken = (user) => {
   return jwt.sign(
@@ -21,7 +21,7 @@ const generateRefreshToken = (user) => {
   );
 };
 
-const register = async ({ firstName, lastName, email, password }) => {
+export const register = async ({ firstName, lastName, email, password }) => {
   const existingUser = await User.findOne({ email });
   if (existingUser) {
     throw ApiError.conflict('An account with this email already exists');
@@ -32,14 +32,13 @@ const register = async ({ firstName, lastName, email, password }) => {
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
 
-  // Store hashed refresh token
   user.refreshToken = await bcrypt.hash(refreshToken, 10);
   await user.save();
 
   return { user, accessToken, refreshToken };
 };
 
-const login = async ({ email, password }) => {
+export const login = async ({ email, password }) => {
   const user = await User.findOne({ email }).select('+password +refreshToken');
   if (!user) {
     throw ApiError.unauthorized('Invalid email or password');
@@ -57,14 +56,13 @@ const login = async ({ email, password }) => {
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
 
-  // Store hashed refresh token
   user.refreshToken = await bcrypt.hash(refreshToken, 10);
   await user.save();
 
   return { user, accessToken, refreshToken };
 };
 
-const refresh = async (token) => {
+export const refresh = async (token) => {
   if (!token) {
     throw ApiError.unauthorized('No refresh token provided');
   }
@@ -85,7 +83,6 @@ const refresh = async (token) => {
     throw ApiError.unauthorized('Refresh token has been revoked');
   }
 
-  // Verify stored hash matches provided token
   const isValid = await bcrypt.compare(token, user.refreshToken);
   if (!isValid) {
     throw ApiError.unauthorized('Invalid refresh token');
@@ -94,23 +91,20 @@ const refresh = async (token) => {
   const accessToken = generateAccessToken(user);
   const newRefreshToken = generateRefreshToken(user);
 
-  // Rotate refresh token
   user.refreshToken = await bcrypt.hash(newRefreshToken, 10);
   await user.save();
 
   return { user, accessToken, refreshToken: newRefreshToken };
 };
 
-const logout = async (userId) => {
+export const logout = async (userId) => {
   await User.findByIdAndUpdate(userId, { refreshToken: null });
 };
 
-const getMe = async (userId) => {
+export const getMe = async (userId) => {
   const user = await User.findById(userId).populate('achievements');
   if (!user) {
     throw ApiError.notFound('User not found');
   }
   return user;
 };
-
-module.exports = { register, login, refresh, logout, getMe };

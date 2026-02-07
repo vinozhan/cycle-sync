@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const reviewSchema = new mongoose.Schema(
   {
@@ -52,14 +52,10 @@ const reviewSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// One review per user per route
 reviewSchema.index({ route: 1, reviewer: 1 }, { unique: true });
-
-// Indexes for common queries
 reviewSchema.index({ route: 1, createdAt: -1 });
 reviewSchema.index({ reviewer: 1 });
 
-// Mark as edited on update
 reviewSchema.pre('save', function (next) {
   if (!this.isNew && this.isModified('comment')) {
     this.isEdited = true;
@@ -67,4 +63,6 @@ reviewSchema.pre('save', function (next) {
   next();
 });
 
-module.exports = mongoose.model('Review', reviewSchema);
+const Review = mongoose.model('Review', reviewSchema);
+
+export default Review;

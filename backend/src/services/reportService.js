@@ -1,0 +1,126 @@
+import Report from '../models/Report.js';
+import User from '../models/User.js';
+import ApiError from '../utils/ApiError.js';
+import { buildPagination, paginateResult } from '../utils/pagination.js';
+import { POINTS } from '../utils/constants.js';
+
+export const create = async (reportData, userId) => {
+  reportData.reportedBy = userId;
+
+  const report = await Report.create(reportData);
+
+  await User.findByIdAndUpdate(userId, {
+    $inc: { totalPoints: POINTS.REPORT_SUBMITTED },
+  });
+
+  return report.populate([
+    { path: 'reportedBy', select: 'firstName lastName avatar' },
+    { path: 'route', select: 'title' },
+  ]);
+};
+
+export const list = async (queryParams) => {
+  const { page, limit, skip, sort } = buildPagination(queryParams);
+  const filter = {};
+
+  if (queryParams.category) {
+    filter.category = queryParams.category;
+  }
+
+  if (queryParams.severity) {
+    filter.severity = queryParams.severity;
+  }
+
+  if (queryParams.status) {
+    filter.status = queryParams.status;
+  }
+
+  if (queryParams.route) {
+    filter.route = queryParams.route;
+  }
+
+  if (queryParams.reportedBy) {
+    filter.reportedBy = queryParams.reportedBy;
+  }
+
+  const [reports, total] = await Promise.all([
+    Report.find(filter)
+      .populate('reportedBy', 'firstName lastName avatar')
+      .populate('route', 'title')
+      .sort(sort)
+      .skip(skip)
+      .limit(limit),
+    Report.countDocuments(filter),
+  ]);
+
+  return paginateResult(reports, total, page, limit);
+};
+
+export const getById = async (id) => {
+  const report = await Report.findById(id)
+    .populate('reportedBy', 'firstName lastName avatar')
+    .populate('route', 'title');
+
+  if (!report) {
+    throw ApiError.notFound('Report not found');
+  }
+  return report;
+};
+
+export const update = async (id, updateData, userId) => {
+  const report = await Report.findById(id);
+  if (!report) {
+    throw ApiError.notFound('Report not found');
+  }
+
+  if (report.reportedBy.toString() !== userId) {
+    throw ApiError.forbidden('You can only update your own reports');
+  }
+
+  if (report.status !== 'open') {
+    throw ApiError.badRequest('Can only edit reports with open status');
+  }
+
+  delete updateData.reportedBy;
+  delete updateData.status;
+  delete updateData.adminNotes;
+  delete updateData.resolvedAt;
+
+  Object.assign(report, updateData);
+  await report.save();
+  return report.populate([
+    { path: 'reportedBy', select: 'firstName lastName avatar' },
+    { path: 'route', select: 'title' },
+  ]);
+};
+
+export const remove = async (id, userId, userRole) => {
+  const report = await Report.findById(id);
+  if (!report) {
+    throw ApiError.notFound('Report not found');
+  }
+
+  if (report.reportedBy.toString() !== userId && userRole !== 'admin') {
+    throw ApiError.forbidden('You can only delete your own reports');
+  }
+
+  await Report.findByIdAndDelete(id);
+};
+
+export const updateStatus = async (id, status, adminNotes) => {
+  const report = await Report.findById(id);
+  if (!report) {
+    throw ApiError.notFound('Report not found');
+  }
+
+  report.status = status;
+  if (adminNotes !== undefined) {
+    report.adminNotes = adminNotes;
+  }
+
+  await report.save();
+  return report.populate([
+    { path: 'reportedBy', select: 'firstName lastName avatar' },
+    { path: 'route', select: 'title' },
+  ]);
+};

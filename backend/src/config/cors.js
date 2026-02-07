@@ -1,4 +1,4 @@
-const env = require('./env');
+import env from './env.js';
 
 const corsOptions = {
   origin: env.corsOrigin,
@@ -7,4 +7,4 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
-module.exports = corsOptions;
+export default corsOptions;

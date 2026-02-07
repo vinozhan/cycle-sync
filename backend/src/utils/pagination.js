@@ -1,4 +1,4 @@
-const buildPagination = (query) => {
+export const buildPagination = (query) => {
   const page = Math.max(1, parseInt(query.page, 10) || 1);
   const limit = Math.min(100, Math.max(1, parseInt(query.limit, 10) || 10));
   const skip = (page - 1) * limit;
@@ -14,7 +14,7 @@ const buildPagination = (query) => {
   return { page, limit, skip, sort };
 };
 
-const paginateResult = (data, total, page, limit) => ({
+export const paginateResult = (data, total, page, limit) => ({
   items: data,
   pagination: {
     total,
@@ -25,5 +25,3 @@ const paginateResult = (data, total, page, limit) => ({
     hasPrevPage: page > 1,
   },
 });
-
-module.exports = { buildPagination, paginateResult };

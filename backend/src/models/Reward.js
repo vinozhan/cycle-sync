@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const { REWARD_CATEGORIES, REWARD_TIERS } = require('../utils/constants');
+import mongoose from 'mongoose';
+import { REWARD_CATEGORIES, REWARD_TIERS } from '../utils/constants.js';
 
 const rewardSchema = new mongoose.Schema(
   {
@@ -60,8 +60,9 @@ const rewardSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Indexes
 rewardSchema.index({ category: 1, tier: 1 });
 rewardSchema.index({ 'criteria.type': 1, 'criteria.threshold': 1 });
 
-module.exports = mongoose.model('Reward', rewardSchema);
+const Reward = mongoose.model('Reward', rewardSchema);
+
+export default Reward;

@@ -1,6 +1,6 @@
-const jwt = require('jsonwebtoken');
-const ApiError = require('../utils/ApiError');
-const env = require('../config/env');
+import jwt from 'jsonwebtoken';
+import ApiError from '../utils/ApiError.js';
+import env from '../config/env.js';
 
 const auth = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -20,4 +20,4 @@ const auth = (req, res, next) => {
   }
 };
 
-module.exports = auth;
+export default auth;

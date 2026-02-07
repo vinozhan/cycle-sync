@@ -2,6 +2,7 @@
   "name": "cyclesync-backend",
   "version": "1.0.0",
   "description": "CycleSync - RESTful API for promoting cycling with safe routes and rewards",
+  "type": "module",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",

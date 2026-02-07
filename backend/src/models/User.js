@@ -1,6 +1,6 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const { ROLES } = require('../utils/constants');
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
+import { ROLES } from '../utils/constants.js';
 
 const userSchema = new mongoose.Schema(
   {
@@ -86,22 +86,18 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Index for text search on name
 userSchema.index({ firstName: 'text', lastName: 'text' });
 
-// Hash password before saving
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 12);
   next();
 });
 
-// Compare password method
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-// Remove sensitive fields when converting to JSON
 userSchema.methods.toJSON = function () {
   const obj = this.toObject();
   delete obj.password;
@@ -110,4 +106,6 @@ userSchema.methods.toJSON = function () {
   return obj;
 };
 
-module.exports = mongoose.model('User', userSchema);
+const User = mongoose.model('User', userSchema);
+
+export default User;

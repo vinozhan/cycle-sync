@@ -1,11 +1,11 @@
-const express = require('express');
-const authController = require('../controllers/authController');
-const { registerValidator, loginValidator } = require('../validators/authValidator');
-const validate = require('../middleware/validate');
-const auth = require('../middleware/auth');
-const { authLimiter } = require('../middleware/rateLimiter');
+import { Router } from 'express';
+import * as authController from '../controllers/authController.js';
+import { registerValidator, loginValidator } from '../validators/authValidator.js';
+import validate from '../middleware/validate.js';
+import auth from '../middleware/auth.js';
+import { authLimiter } from '../middleware/rateLimiter.js';
 
-const router = express.Router();
+const router = Router();
 
 /**
  * @swagger
@@ -134,4 +134,4 @@ router.post('/logout', auth, authController.logout);
  */
 router.get('/me', auth, authController.getMe);
 
-module.exports = router;
+export default router;

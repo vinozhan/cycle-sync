@@ -1,15 +1,15 @@
-const authService = require('../services/authService');
-const ApiResponse = require('../utils/ApiResponse');
+import * as authService from '../services/authService.js';
+import ApiResponse from '../utils/ApiResponse.js';
 
 const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
   sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  maxAge: 7 * 24 * 60 * 60 * 1000,
   path: '/',
 };
 
-const register = async (req, res, next) => {
+export const register = async (req, res, next) => {
   try {
     const { user, accessToken, refreshToken } = await authService.register(req.body);
     res.cookie('refreshToken', refreshToken, REFRESH_COOKIE_OPTIONS);
@@ -19,7 +19,7 @@ const register = async (req, res, next) => {
   }
 };
 
-const login = async (req, res, next) => {
+export const login = async (req, res, next) => {
   try {
     const { user, accessToken, refreshToken } = await authService.login(req.body);
     res.cookie('refreshToken', refreshToken, REFRESH_COOKIE_OPTIONS);
@@ -29,7 +29,7 @@ const login = async (req, res, next) => {
   }
 };
 
-const refresh = async (req, res, next) => {
+export const refresh = async (req, res, next) => {
   try {
     const token = req.cookies.refreshToken;
     const { user, accessToken, refreshToken } = await authService.refresh(token);
@@ -40,7 +40,7 @@ const refresh = async (req, res, next) => {
   }
 };
 
-const logout = async (req, res, next) => {
+export const logout = async (req, res, next) => {
   try {
     await authService.logout(req.user.userId);
     res.clearCookie('refreshToken', { path: '/' });
@@ -50,7 +50,7 @@ const logout = async (req, res, next) => {
   }
 };
 
-const getMe = async (req, res, next) => {
+export const getMe = async (req, res, next) => {
   try {
     const user = await authService.getMe(req.user.userId);
     ApiResponse.success(res, { user });
@@ -58,5 +58,3 @@ const getMe = async (req, res, next) => {
     next(error);
   }
 };
-
-module.exports = { register, login, refresh, logout, getMe };

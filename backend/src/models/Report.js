@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const { REPORT_CATEGORIES, REPORT_SEVERITY, REPORT_STATUS } = require('../utils/constants');
+import mongoose from 'mongoose';
+import { REPORT_CATEGORIES, REPORT_SEVERITY, REPORT_STATUS } from '../utils/constants.js';
 
 const reportSchema = new mongoose.Schema(
   {
@@ -70,13 +70,11 @@ const reportSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Indexes for common queries
 reportSchema.index({ status: 1, severity: 1 });
 reportSchema.index({ reportedBy: 1 });
 reportSchema.index({ route: 1 });
 reportSchema.index({ category: 1, createdAt: -1 });
 
-// Set resolvedAt when status changes to resolved
 reportSchema.pre('save', function (next) {
   if (this.isModified('status') && this.status === 'resolved' && !this.resolvedAt) {
     this.resolvedAt = new Date();
@@ -84,4 +82,6 @@ reportSchema.pre('save', function (next) {
   next();
 });
 
-module.exports = mongoose.model('Report', reportSchema);
+const Report = mongoose.model('Report', reportSchema);
+
+export default Report;
