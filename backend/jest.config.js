@@ -11,7 +11,7 @@ export default {
     '!src/config/db.js',
     '!src/config/swagger.js',
   ],
-  coverageThresholds: {
+  coverageThreshold: {
     global: {
       branches: 80,
       functions: 80,

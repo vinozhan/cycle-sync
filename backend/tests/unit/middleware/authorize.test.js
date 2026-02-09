@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import authorize from '../../../src/middleware/authorize.js';
 
 describe('authorize middleware', () => {

@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import ApiResponse from '../../../src/utils/ApiResponse.js';
 
 describe('ApiResponse', () => {

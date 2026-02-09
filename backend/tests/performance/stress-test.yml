@@ -1,0 +1,65 @@
+config:
+  target: "http://localhost:5000"
+  phases:
+    - duration: 30
+      arrivalRate: 10
+      name: "Warm up"
+    - duration: 60
+      arrivalRate: 30
+      name: "Ramp up"
+    - duration: 60
+      arrivalRate: 60
+      name: "High load"
+    - duration: 30
+      arrivalRate: 100
+      name: "Stress peak"
+  defaults:
+    headers:
+      Content-Type: "application/json"
+
+scenarios:
+  - name: "Heavy route browsing"
+    weight: 50
+    flow:
+      - get:
+          url: "/api/routes"
+      - get:
+          url: "/api/routes?difficulty=easy"
+      - get:
+          url: "/api/routes?difficulty=moderate"
+      - get:
+          url: "/api/routes?difficulty=hard"
+      - get:
+          url: "/api/routes?sort=distance&order=asc&limit=20"
+
+  - name: "Auth stress"
+    weight: 25
+    flow:
+      - post:
+          url: "/api/auth/register"
+          json:
+            firstName: "Stress"
+            lastName: "Tester_{{ $randomNumber() }}"
+            email: "stress_{{ $uuid }}@test.com"
+            password: "StressTest1"
+          capture:
+            - json: "$.data.accessToken"
+              as: "token"
+      - get:
+          url: "/api/auth/me"
+          headers:
+            Authorization: "Bearer {{ token }}"
+      - post:
+          url: "/api/auth/logout"
+          headers:
+            Authorization: "Bearer {{ token }}"
+
+  - name: "Mixed API calls"
+    weight: 25
+    flow:
+      - get:
+          url: "/health"
+      - get:
+          url: "/api/routes?page=1&limit=5"
+      - get:
+          url: "/api/reviews?limit=5"

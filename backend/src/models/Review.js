@@ -56,11 +56,10 @@ reviewSchema.index({ route: 1, reviewer: 1 }, { unique: true });
 reviewSchema.index({ route: 1, createdAt: -1 });
 reviewSchema.index({ reviewer: 1 });
 
-reviewSchema.pre('save', function (next) {
+reviewSchema.pre('save', function () {
   if (!this.isNew && this.isModified('comment')) {
     this.isEdited = true;
   }
-  next();
 });
 
 const Review = mongoose.model('Review', reviewSchema);

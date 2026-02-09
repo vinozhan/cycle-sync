@@ -75,11 +75,10 @@ reportSchema.index({ reportedBy: 1 });
 reportSchema.index({ route: 1 });
 reportSchema.index({ category: 1, createdAt: -1 });
 
-reportSchema.pre('save', function (next) {
+reportSchema.pre('save', function () {
   if (this.isModified('status') && this.status === 'resolved' && !this.resolvedAt) {
     this.resolvedAt = new Date();
   }
-  next();
 });
 
 const Report = mongoose.model('Report', reportSchema);

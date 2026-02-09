@@ -24,8 +24,13 @@ describe('pagination', () => {
       expect(result.page).toBe(1);
     });
 
-    it('should enforce minimum limit of 1', () => {
+    it('should fall back to default limit for zero', () => {
       const result = buildPagination({ limit: '0' });
+      expect(result.limit).toBe(10);
+    });
+
+    it('should enforce minimum limit of 1', () => {
+      const result = buildPagination({ limit: '-5' });
       expect(result.limit).toBe(1);
     });
 

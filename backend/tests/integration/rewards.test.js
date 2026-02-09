@@ -264,7 +264,7 @@ describe('POST /api/rewards/check/:userId', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data.granted).toBeDefined();
-    expect(res.body.data.alreadyEarned).toBeDefined();
+    expect(res.body.data.totalAchievements).toBeDefined();
   });
 
   it('should return 403 for non-admin', async () => {

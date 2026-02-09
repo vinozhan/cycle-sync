@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import ApiError from '../../../src/utils/ApiError.js';
 import errorHandler from '../../../src/middleware/errorHandler.js';
 
