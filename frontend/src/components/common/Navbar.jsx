@@ -31,6 +31,7 @@ const Navbar = () => {
         <nav className="hidden items-center gap-1 md:flex">
           <NavLink to="/routes" className={linkClass}>Routes</NavLink>
           <NavLink to="/reports" className={linkClass}>Reports</NavLink>
+          <NavLink to="/rewards" className={linkClass}>Rewards</NavLink>
 
           {isAuthenticated ? (
             <>
@@ -39,9 +40,9 @@ const Navbar = () => {
                 <NavLink to="/admin" className={linkClass}>Admin</NavLink>
               )}
               <div className="ml-3 flex items-center gap-3 border-l border-gray-200 pl-3">
-                <span className="text-sm text-gray-500">
+                <Link to="/profile" className="text-sm font-medium text-gray-500 hover:text-emerald-600">
                   {user?.firstName}
-                </span>
+                </Link>
                 <button
                   onClick={handleLogout}
                   className="rounded-lg bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
@@ -83,10 +84,12 @@ const Navbar = () => {
           <div className="flex flex-col gap-1">
             <NavLink to="/routes" className={linkClass} onClick={() => setMobileOpen(false)}>Routes</NavLink>
             <NavLink to="/reports" className={linkClass} onClick={() => setMobileOpen(false)}>Reports</NavLink>
+            <NavLink to="/rewards" className={linkClass} onClick={() => setMobileOpen(false)}>Rewards</NavLink>
 
             {isAuthenticated ? (
               <>
                 <NavLink to="/dashboard" className={linkClass} onClick={() => setMobileOpen(false)}>Dashboard</NavLink>
+                <NavLink to="/profile" className={linkClass} onClick={() => setMobileOpen(false)}>Profile</NavLink>
                 {isAdmin && (
                   <NavLink to="/admin" className={linkClass} onClick={() => setMobileOpen(false)}>Admin</NavLink>
                 )}
