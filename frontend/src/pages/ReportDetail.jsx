@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { HiExclamationTriangle, HiMapPin, HiTrash, HiPencil } from 'react-icons/hi2';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import toast from 'react-hot-toast';
 import useReports from '../hooks/useReports';
 import useAuth from '../hooks/useAuth';
@@ -9,7 +10,9 @@ import Button from '../components/common/Button';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import { formatDate } from '../utils/formatters';
 import { getErrorMessage } from '../utils/validators';
-import { SEVERITY_OPTIONS, REPORT_STATUS_OPTIONS, REPORT_CATEGORIES } from '../utils/constants';
+import { SEVERITY_OPTIONS, REPORT_STATUS_OPTIONS, REPORT_CATEGORIES, DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '../utils/constants';
+import '../utils/leafletSetup';
+import { hazardIcon } from '../utils/leafletSetup';
 
 const ReportDetail = () => {
   const { id } = useParams();
@@ -54,6 +57,9 @@ const ReportDetail = () => {
   if (loading) return <LoadingSpinner size="lg" className="min-h-screen" />;
   if (!report) return <p className="py-20 text-center text-gray-500">Report not found.</p>;
 
+  const hasLocation = report.location?.lat && report.location?.lng;
+  const markerPosition = hasLocation ? [report.location.lat, report.location.lng] : null;
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Header */}
@@ -84,6 +90,30 @@ const ReportDetail = () => {
         )}
       </div>
 
+      {/* Map */}
+      {hasLocation && (
+        <div className="mt-6 overflow-hidden rounded-xl border border-gray-200">
+          <MapContainer
+            center={markerPosition}
+            zoom={15}
+            scrollWheelZoom={false}
+            className="h-[300px] w-full"
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <Marker position={markerPosition} icon={hazardIcon}>
+              <Popup>
+                <span className="font-medium">{report.title}</span>
+                <br />
+                <span className="text-xs capitalize text-gray-500">{report.severity} &middot; {getCategoryLabel(report.category)}</span>
+              </Popup>
+            </Marker>
+          </MapContainer>
+        </div>
+      )}
+
       {/* Details */}
       <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6">
         <p className="text-gray-700">{report.description}</p>
@@ -103,6 +133,12 @@ const ReportDetail = () => {
         {report.location?.address && (
           <p className="mt-4 flex items-center gap-1 text-sm text-gray-500">
             <HiMapPin className="h-4 w-4" /> {report.location.address}
+          </p>
+        )}
+
+        {hasLocation && (
+          <p className="mt-1 text-xs text-gray-400">
+            {report.location.lat.toFixed(6)}, {report.location.lng.toFixed(6)}
           </p>
         )}
 

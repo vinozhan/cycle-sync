@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { HiStar, HiMapPin, HiTrash, HiPencil, HiPlay, HiStop, HiXMark } from 'react-icons/hi2';
+import { HiStar, HiMapPin, HiTrash, HiPencil, HiPlay, HiStop, HiXMark, HiClock, HiTrophy, HiGlobeAmericas } from 'react-icons/hi2';
 import toast from 'react-hot-toast';
 import useRoutes from '../hooks/useRoutes';
 import useReviews from '../hooks/useReviews';
@@ -18,15 +18,19 @@ const RouteDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { route, loading, fetchRoute, deleteRoute } = useRoutes();
-  const { reviews, fetchReviews, createReview, deleteReview } = useReviews();
+  const { reviews, fetchReviews, createReview, updateReview, deleteReview } = useReviews();
   const { activeRide, fetchActiveRide, startRide, completeRide, cancelRide } = useRides();
   const { user, isAuthenticated, isAdmin, fetchUser } = useAuth();
 
-  const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
+  const [reviewForm, setReviewForm] = useState({ rating: 5, title: '', comment: '' });
   const [submitting, setSubmitting] = useState(false);
   const [rideLoading, setRideLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [reviewDeleteId, setReviewDeleteId] = useState(null);
+  const [editingReview, setEditingReview] = useState(null);
+  const [editForm, setEditForm] = useState({ rating: 5, comment: '' });
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
     fetchRoute(id);
@@ -38,6 +42,34 @@ const RouteDetail = () => {
       fetchActiveRide();
     }
   }, [isAuthenticated, fetchActiveRide]);
+
+  const isActiveOnThisRoute = activeRide && activeRide.route?._id === id;
+  const hasActiveRideElsewhere = activeRide && activeRide.route?._id !== id;
+
+  // Live elapsed timer for active ride
+  useEffect(() => {
+    if (!isActiveOnThisRoute || !activeRide?.startedAt) {
+      setElapsed(0);
+      return;
+    }
+    const calcElapsed = () => Math.floor((Date.now() - new Date(activeRide.startedAt).getTime()) / 1000);
+    setElapsed(calcElapsed());
+    const timer = setInterval(() => setElapsed(calcElapsed()), 1000);
+    return () => clearInterval(timer);
+  }, [isActiveOnThisRoute, activeRide?.startedAt]);
+
+  const formatElapsed = (totalSeconds) => {
+    const hrs = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    const pad = (n) => String(n).padStart(2, '0');
+    return hrs > 0 ? `${pad(hrs)}:${pad(mins)}:${pad(secs)}` : `${pad(mins)}:${pad(secs)}`;
+  };
+
+  const estimatedCo2 = useMemo(() => {
+    if (!route?.distance) return null;
+    return (route.distance * 0.21).toFixed(2);
+  }, [route?.distance]);
 
   const isOwner = user && route?.createdBy?._id === user._id;
 
@@ -70,13 +102,34 @@ const RouteDetail = () => {
     try {
       await createReview({ route: id, ...reviewForm });
       toast.success('Review submitted! +10 points');
-      setReviewForm({ rating: 5, comment: '' });
+      setReviewForm({ rating: 5, title: '', comment: '' });
       fetchRoute(id);
       fetchReviews({ route: id, limit: 50 });
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleEditStart = (review) => {
+    setEditingReview(review._id);
+    setEditForm({ rating: review.rating, comment: review.comment || '' });
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    setEditSubmitting(true);
+    try {
+      await updateReview(editingReview, editForm);
+      toast.success('Review updated');
+      setEditingReview(null);
+      fetchRoute(id);
+      fetchReviews({ route: id, limit: 50 });
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setEditSubmitting(false);
     }
   };
 
@@ -117,8 +170,6 @@ const RouteDetail = () => {
     }
   };
 
-  const isActiveOnThisRoute = activeRide && activeRide.route?._id === id;
-  const hasActiveRideElsewhere = activeRide && activeRide.route?._id !== id;
 
   if (loading) return <LoadingSpinner size="lg" className="min-h-screen" />;
   if (!route) return <p className="py-20 text-center text-gray-500">Route not found.</p>;
@@ -155,28 +206,84 @@ const RouteDetail = () => {
 
       {/* Ride Actions */}
       {isAuthenticated && (
-        <div className="mt-4 flex items-center gap-3">
+        <>
           {!activeRide && (
-            <Button onClick={handleStartRide} loading={rideLoading} size="sm">
-              <HiPlay className="h-4 w-4" /> Start Ride
-            </Button>
+            <div className="mt-4">
+              <Button onClick={handleStartRide} loading={rideLoading} size="sm">
+                <HiPlay className="h-4 w-4" /> Start Ride
+              </Button>
+            </div>
           )}
+
           {isActiveOnThisRoute && (
-            <>
-              <Button onClick={handleCompleteRide} loading={rideLoading} size="sm">
-                <HiStop className="h-4 w-4" /> Complete Ride
-              </Button>
-              <Button variant="outline" onClick={handleCancelRide} loading={rideLoading} size="sm">
-                <HiXMark className="h-4 w-4" /> Cancel
-              </Button>
-            </>
+            <div className="mt-4 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 p-5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-3 w-3">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500" />
+                  </span>
+                  <span className="text-sm font-semibold text-emerald-800">Ride in Progress</span>
+                </div>
+                <span className="text-xs text-gray-500">
+                  Started {new Date(activeRide.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+
+              {/* Live timer */}
+              <div className="mt-4 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="flex items-center gap-2 text-3xl font-bold tabular-nums text-gray-900">
+                    <HiClock className="h-7 w-7 text-emerald-600" />
+                    {formatElapsed(elapsed)}
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">Elapsed Time</p>
+                </div>
+              </div>
+
+              {/* Stats preview */}
+              <div className="mt-4 grid grid-cols-3 gap-3">
+                {route?.distance && (
+                  <div className="rounded-lg bg-white/70 p-3 text-center">
+                    <HiMapPin className="mx-auto h-5 w-5 text-emerald-600" />
+                    <p className="mt-1 text-sm font-semibold text-gray-900">{formatDistance(route.distance)}</p>
+                    <p className="text-xs text-gray-500">Distance</p>
+                  </div>
+                )}
+                {estimatedCo2 && (
+                  <div className="rounded-lg bg-white/70 p-3 text-center">
+                    <HiGlobeAmericas className="mx-auto h-5 w-5 text-emerald-600" />
+                    <p className="mt-1 text-sm font-semibold text-gray-900">{estimatedCo2} kg</p>
+                    <p className="text-xs text-gray-500">CO2 Saved</p>
+                  </div>
+                )}
+                <div className="rounded-lg bg-white/70 p-3 text-center">
+                  <HiTrophy className="mx-auto h-5 w-5 text-amber-500" />
+                  <p className="mt-1 text-sm font-semibold text-gray-900">+10</p>
+                  <p className="text-xs text-gray-500">Points</p>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="mt-4 flex items-center gap-3">
+                <Button onClick={handleCompleteRide} loading={rideLoading} size="sm" className="flex-1">
+                  <HiStop className="h-4 w-4" /> Complete Ride
+                </Button>
+                <Button variant="outline" onClick={handleCancelRide} loading={rideLoading} size="sm">
+                  <HiXMark className="h-4 w-4" /> Cancel
+                </Button>
+              </div>
+            </div>
           )}
+
           {hasActiveRideElsewhere && (
-            <Button disabled size="sm" title="You have an active ride on another route">
-              <HiPlay className="h-4 w-4" /> Start Ride
-            </Button>
+            <div className="mt-4">
+              <Button disabled size="sm" title="You have an active ride on another route">
+                <HiPlay className="h-4 w-4" /> Start Ride
+              </Button>
+            </div>
           )}
-        </div>
+        </>
       )}
 
       {/* Map */}
@@ -279,22 +386,32 @@ const RouteDetail = () => {
                     <span className="text-sm font-medium text-gray-900">
                       {review.reviewer?.firstName} {review.reviewer?.lastName}
                     </span>
-                    <div className="flex">
-                      {[1, 2, 3, 4, 5].map((n) => (
-                        <HiStar
-                          key={n}
-                          className={`h-3.5 w-3.5 ${
-                            n <= review.rating ? 'text-yellow-400' : 'text-gray-200'
-                          }`}
-                        />
-                      ))}
-                    </div>
+                    {editingReview !== review._id && (
+                      <div className="flex">
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <HiStar
+                            key={n}
+                            className={`h-3.5 w-3.5 ${
+                              n <= review.rating ? 'text-yellow-400' : 'text-gray-200'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    )}
                     {review.isEdited && (
                       <span className="text-xs text-gray-400">(edited)</span>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-400">{formatDate(review.createdAt)}</span>
+                    {user && review.reviewer?._id === user._id && editingReview !== review._id && (
+                      <button
+                        onClick={() => handleEditStart(review)}
+                        className="text-gray-400 hover:text-emerald-600"
+                      >
+                        <HiPencil className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                     {user && (review.reviewer?._id === user._id || isAdmin) && (
                       <button
                         onClick={() => setReviewDeleteId(review._id)}
@@ -305,8 +422,48 @@ const RouteDetail = () => {
                     )}
                   </div>
                 </div>
-                {review.comment && (
-                  <p className="mt-2 text-sm text-gray-600">{review.comment}</p>
+                {editingReview === review._id ? (
+                  <form onSubmit={handleEditSubmit} className="mt-3">
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => setEditForm({ ...editForm, rating: n })}
+                          className="transition-transform hover:scale-110"
+                        >
+                          <HiStar
+                            className={`h-5 w-5 ${
+                              n <= editForm.rating ? 'text-yellow-400' : 'text-gray-200'
+                            }`}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                    <textarea
+                      value={editForm.comment}
+                      onChange={(e) => setEditForm({ ...editForm, comment: e.target.value })}
+                      rows={2}
+                      className="mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                    />
+                    <div className="mt-2 flex gap-2">
+                      <Button type="submit" size="sm" loading={editSubmitting}>
+                        Save
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingReview(null)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                ) : (
+                  review.comment && (
+                    <p className="mt-2 text-sm text-gray-600">{review.comment}</p>
+                  )
                 )}
               </div>
             ))

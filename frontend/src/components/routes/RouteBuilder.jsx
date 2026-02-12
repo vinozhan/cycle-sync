@@ -1,9 +1,9 @@
 import { useState, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Polyline, Popup, useMapEvents, useMap } from 'react-leaflet';
 import { useEffect } from 'react';
-import { HiMagnifyingGlass, HiViewfinderCircle } from 'react-icons/hi2';
+import { HiMagnifyingGlass, HiViewfinderCircle, HiExclamationTriangle } from 'react-icons/hi2';
 import '../../utils/leafletSetup';
-import { startIcon, endIcon } from '../../utils/leafletSetup';
+import { startIcon, endIcon, hazardIcon } from '../../utils/leafletSetup';
 import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '../../utils/constants';
 import api from '../../services/api';
 
@@ -78,10 +78,28 @@ const RouteBuilder = ({ onRouteData, className = '' }) => {
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [flyTarget, setFlyTarget] = useState(null);
 
+  const [showHazards, setShowHazards] = useState(false);
+  const [hazards, setHazards] = useState([]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [locating, setLocating] = useState(false);
   const debounceRef = useRef(null);
+
+  useEffect(() => {
+    if (!showHazards) return;
+    const fetchHazards = async () => {
+      try {
+        const { data } = await api.get('/reports', {
+          params: { status: 'open', limit: 100 },
+        });
+        setHazards(data.data.items);
+      } catch {
+        setHazards([]);
+      }
+    };
+    fetchHazards();
+  }, [showHazards]);
 
   const notify = (sp, ep, preview) => {
     onRouteData({
@@ -348,6 +366,18 @@ const RouteBuilder = ({ onRouteData, className = '' }) => {
         )}
       </div>
 
+      {/* Hazard overlay toggle */}
+      <label className="mb-2 flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={showHazards}
+          onChange={(e) => setShowHazards(e.target.checked)}
+          className="rounded border-gray-300 text-amber-500 focus:ring-amber-500"
+        />
+        <HiExclamationTriangle className="h-4 w-4 text-amber-500" />
+        Show hazard reports
+      </label>
+
       {/* Map */}
       <div className="overflow-hidden rounded-xl border border-gray-200">
         <MapContainer
@@ -378,6 +408,19 @@ const RouteBuilder = ({ onRouteData, className = '' }) => {
           {polylinePositions.length >= 2 && (
             <Polyline positions={polylinePositions} color="#059669" weight={4} opacity={0.8} />
           )}
+
+          {showHazards && hazards.map((h) => (
+            h.location?.lat && h.location?.lng && (
+              <Marker key={h._id} position={[h.location.lat, h.location.lng]} icon={hazardIcon}>
+                <Popup>
+                  <span className="font-medium">{h.title}</span><br />
+                  <span className="text-xs capitalize text-gray-500">
+                    {h.severity} · {h.category?.replace('_', ' ')}
+                  </span>
+                </Popup>
+              </Marker>
+            )
+          ))}
         </MapContainer>
       </div>
 

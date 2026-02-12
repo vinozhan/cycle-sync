@@ -14,9 +14,8 @@ export const createReviewValidator = [
     .withMessage('Rating must be between 1 and 5'),
 
   body('title')
+    .optional()
     .trim()
-    .notEmpty()
-    .withMessage('Review title is required')
     .isLength({ max: 100 })
     .withMessage('Title cannot exceed 100 characters'),
 

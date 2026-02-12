@@ -1,18 +1,23 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { HiPlus, HiExclamationTriangle, HiMapPin } from 'react-icons/hi2';
+import { Link, useNavigate } from 'react-router-dom';
+import { HiPlus, HiExclamationTriangle, HiMapPin, HiPencil, HiTrash } from 'react-icons/hi2';
+import toast from 'react-hot-toast';
 import useReports from '../hooks/useReports';
 import useAuth from '../hooks/useAuth';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import Pagination from '../components/common/Pagination';
 import FilterPanel from '../components/common/FilterPanel';
+import ConfirmDialog from '../components/common/ConfirmDialog';
 import { formatDate } from '../utils/formatters';
+import { getErrorMessage } from '../utils/validators';
 import { SEVERITY_OPTIONS, REPORT_STATUS_OPTIONS, REPORT_CATEGORIES } from '../utils/constants';
 
 const ReportsList = () => {
-  const { reports, pagination, loading, fetchReports } = useReports();
-  const { isAuthenticated } = useAuth();
+  const { reports, pagination, loading, fetchReports, deleteReport } = useReports();
+  const { user, isAuthenticated, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [filters, setFilters] = useState({ severity: '', status: '', page: 1 });
+  const [deleteId, setDeleteId] = useState(null);
 
   useEffect(() => {
     const params = { page: filters.page };
@@ -33,6 +38,20 @@ const ReportsList = () => {
 
   const getCategoryLabel = (category) => {
     return REPORT_CATEGORIES.find((c) => c.value === category)?.label || category;
+  };
+
+  const isOwner = (report) => user && report.reportedBy?._id === user._id;
+
+  const handleDelete = async () => {
+    try {
+      await deleteReport(deleteId);
+      toast.success('Report deleted');
+      fetchReports({ page: filters.page, severity: filters.severity || undefined, status: filters.status || undefined });
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setDeleteId(null);
+    }
   };
 
   return (
@@ -104,21 +123,42 @@ const ReportsList = () => {
                           Route: {report.route.title || 'View Route'}
                         </p>
                       )}
-
-                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-gray-600">
-                          {getCategoryLabel(report.category)}
-                        </span>
-                        <span className={`rounded-full px-2 py-0.5 ${getSeverityBadge(report.severity)}`}>
-                          {report.severity}
-                        </span>
-                        <span className={`rounded-full px-2 py-0.5 ${getStatusBadge(report.status)}`}>
-                          {report.status?.replace('_', ' ')}
-                        </span>
-                      </div>
                     </div>
                   </div>
-                  <span className="text-xs text-gray-400">{formatDate(report.createdAt)}</span>
+                  <span className="flex-shrink-0 text-xs text-gray-400">{formatDate(report.createdAt)}</span>
+                </div>
+                <div className="mt-2 flex items-center text-xs">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-gray-600">
+                      {getCategoryLabel(report.category)}
+                    </span>
+                    <span className={`rounded-full px-2 py-0.5 ${getSeverityBadge(report.severity)}`}>
+                      {report.severity}
+                    </span>
+                    <span className={`rounded-full px-2 py-0.5 ${getStatusBadge(report.status)}`}>
+                      {report.status?.replace('_', ' ')}
+                    </span>
+                  </div>
+                  {isAuthenticated && (isOwner(report) || isAdmin) && (
+                    <div className="ml-auto flex items-center gap-1">
+                      {isOwner(report) && report.status === 'open' && (
+                        <button
+                          onClick={(e) => { e.preventDefault(); navigate(`/reports/${report._id}/edit`); }}
+                          className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-emerald-600"
+                          title="Edit report"
+                        >
+                          <HiPencil className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                      <button
+                        onClick={(e) => { e.preventDefault(); setDeleteId(report._id); }}
+                        className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-red-600"
+                        title="Delete report"
+                      >
+                        <HiTrash className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </Link>
             ))}
@@ -130,6 +170,15 @@ const ReportsList = () => {
           />
         </>
       )}
+
+      <ConfirmDialog
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={handleDelete}
+        title="Delete Report"
+        message="Are you sure you want to delete this report? This action cannot be undone."
+        confirmLabel="Delete Report"
+      />
     </div>
   );
 };
