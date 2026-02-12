@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { HiTrophy, HiMapPin, HiShieldCheck, HiStar, HiChartBar } from 'react-icons/hi2';
+import { Link } from 'react-router-dom';
+import { HiTrophy, HiMapPin, HiShieldCheck, HiStar, HiChartBar, HiPlus } from 'react-icons/hi2';
 import useAuth from '../hooks/useAuth';
 import api from '../services/api';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import Button from '../components/common/Button';
 import { formatDistance } from '../utils/formatters';
 import { REWARD_TIERS } from '../utils/constants';
 
@@ -45,12 +47,35 @@ const Dashboard = () => {
     return REWARD_TIERS.find((t) => t.value === tier)?.color || 'text-gray-600';
   };
 
+  const isNewUser = !stats?.routesCreated && !stats?.reportsSubmitted && !stats?.reviewsWritten && achievements.length === 0;
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <h1 className="text-2xl font-bold text-gray-900">
         Welcome, {user?.firstName}!
       </h1>
       <p className="mt-1 text-sm text-gray-500">Your cycling dashboard</p>
+
+      {/* New user welcome state */}
+      {isNewUser && (
+        <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-6">
+          <h2 className="text-lg font-semibold text-emerald-800">Welcome to CycleSync!</h2>
+          <p className="mt-1 text-sm text-emerald-700">
+            Get started by creating your first route, reporting a hazard, or exploring community routes. Every contribution earns you points and achievements!
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link to="/routes/create">
+              <Button size="sm"><HiPlus className="h-4 w-4" /> Create Route</Button>
+            </Link>
+            <Link to="/reports/create">
+              <Button variant="secondary" size="sm"><HiPlus className="h-4 w-4" /> Report Hazard</Button>
+            </Link>
+            <Link to="/routes">
+              <Button variant="outline" size="sm">Explore Routes</Button>
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -68,6 +93,37 @@ const Dashboard = () => {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Quick Actions */}
+      <div className="mt-10">
+        <h2 className="text-lg font-bold text-gray-900">Quick Actions</h2>
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <Link
+            to="/routes/create"
+            className="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+          >
+            <HiMapPin className="h-8 w-8 text-blue-600" />
+            <h3 className="mt-3 font-semibold text-gray-900 group-hover:text-emerald-600">Create Route</h3>
+            <p className="mt-1 text-sm text-gray-500">Share a new cycling route with the community</p>
+          </Link>
+          <Link
+            to="/reports/create"
+            className="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+          >
+            <HiShieldCheck className="h-8 w-8 text-amber-600" />
+            <h3 className="mt-3 font-semibold text-gray-900 group-hover:text-emerald-600">Report Hazard</h3>
+            <p className="mt-1 text-sm text-gray-500">Alert cyclists about road hazards and dangers</p>
+          </Link>
+          <Link
+            to="/routes"
+            className="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+          >
+            <HiStar className="h-8 w-8 text-purple-600" />
+            <h3 className="mt-3 font-semibold text-gray-900 group-hover:text-emerald-600">Explore Routes</h3>
+            <p className="mt-1 text-sm text-gray-500">Discover community-rated cycling routes</p>
+          </Link>
+        </div>
       </div>
 
       {/* Achievements */}

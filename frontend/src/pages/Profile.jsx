@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { HiTrophy, HiMapPin, HiShieldCheck, HiStar, HiChartBar } from 'react-icons/hi2';
+import { HiTrophy, HiMapPin, HiShieldCheck, HiStar, HiChartBar, HiPencil } from 'react-icons/hi2';
+import toast from 'react-hot-toast';
 import api from '../services/api';
 import useAuth from '../hooks/useAuth';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import Pagination from '../components/common/Pagination';
-import { formatDate, formatDistance, formatRating } from '../utils/formatters';
+import Modal from '../components/common/Modal';
+import Input from '../components/common/Input';
+import Button from '../components/common/Button';
+import { formatDate, formatDistance, formatRating, getInitials } from '../utils/formatters';
+import { getErrorMessage } from '../utils/validators';
 import { REWARD_TIERS } from '../utils/constants';
-import { getInitials } from '../utils/formatters';
 
 const tabs = [
   { key: 'routes', label: 'Routes', icon: HiMapPin },
@@ -17,8 +21,9 @@ const tabs = [
 
 const Profile = () => {
   const { id } = useParams();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, setUser } = useAuth();
   const userId = id || currentUser?._id;
+  const isOwnProfile = !id || id === currentUser?._id;
 
   const [profile, setProfile] = useState(null);
   const [stats, setStats] = useState(null);
@@ -28,6 +33,11 @@ const Profile = () => {
   const [pagination, setPagination] = useState(null);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+
+  // Edit modal state
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState({ firstName: '', lastName: '', bio: '' });
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!userId) return;
@@ -75,6 +85,37 @@ const Profile = () => {
   const getTierColor = (tier) =>
     REWARD_TIERS.find((t) => t.value === tier)?.color || 'text-gray-500';
 
+  const openEditModal = () => {
+    setEditForm({
+      firstName: profile?.firstName || '',
+      lastName: profile?.lastName || '',
+      bio: profile?.bio || '',
+    });
+    setEditOpen(true);
+  };
+
+  const handleEditSave = async () => {
+    setSaving(true);
+    try {
+      const res = await api.put(`/users/${userId}`, {
+        firstName: editForm.firstName,
+        lastName: editForm.lastName,
+        bio: editForm.bio,
+      });
+      const updatedUser = res.data.data.user;
+      setProfile(updatedUser);
+      if (isOwnProfile && setUser) {
+        setUser(updatedUser);
+      }
+      toast.success('Profile updated');
+      setEditOpen(false);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) return <LoadingSpinner size="lg" className="min-h-screen" />;
   if (!profile) return <p className="py-20 text-center text-gray-500">User not found.</p>;
 
@@ -82,16 +123,29 @@ const Profile = () => {
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Profile Header */}
       <div className="flex items-center gap-5">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-xl font-bold text-emerald-700">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-2xl font-bold text-emerald-700">
           {getInitials(profile.firstName, profile.lastName)}
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            {profile.firstName} {profile.lastName}
-          </h1>
+        <div className="flex-1">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-gray-900">
+              {profile.firstName} {profile.lastName}
+            </h1>
+            {isOwnProfile && (
+              <button
+                onClick={openEditModal}
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              >
+                <HiPencil className="h-4 w-4" />
+              </button>
+            )}
+          </div>
           <p className="text-sm text-gray-500">
             Member since {formatDate(profile.createdAt)}
           </p>
+          {profile.bio && (
+            <p className="mt-1 text-sm text-gray-600">{profile.bio}</p>
+          )}
         </div>
       </div>
 
@@ -183,6 +237,44 @@ const Profile = () => {
       </div>
 
       <Pagination pagination={pagination} onPageChange={setPage} />
+
+      {/* Edit Profile Modal */}
+      <Modal isOpen={editOpen} onClose={() => setEditOpen(false)} title="Edit Profile">
+        <div className="space-y-4">
+          <Input
+            label="First Name"
+            id="editFirstName"
+            value={editForm.firstName}
+            onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
+          />
+          <Input
+            label="Last Name"
+            id="editLastName"
+            value={editForm.lastName}
+            onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })}
+          />
+          <div>
+            <label htmlFor="editBio" className="block text-sm font-medium text-gray-700">
+              Bio
+            </label>
+            <textarea
+              id="editBio"
+              rows={3}
+              maxLength={500}
+              value={editForm.bio}
+              onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:outline-none"
+            />
+            <p className="mt-1 text-right text-xs text-gray-400">
+              {editForm.bio.length} / 500
+            </p>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button onClick={handleEditSave} loading={saving}>Save Changes</Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

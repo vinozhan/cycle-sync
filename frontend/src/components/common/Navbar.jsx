@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { HiBars3, HiXMark } from 'react-icons/hi2';
 import useAuth from '../../hooks/useAuth';
+import { getInitials } from '../../utils/formatters';
 
 const Navbar = () => {
   const { isAuthenticated, isAdmin, user, logout } = useAuth();
@@ -14,10 +15,10 @@ const Navbar = () => {
   };
 
   const linkClass = ({ isActive }) =>
-    `px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+    `relative px-3 py-2 text-sm font-medium transition-colors ${
       isActive
-        ? 'bg-emerald-100 text-emerald-700'
-        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+        ? 'text-emerald-700 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:h-0.5 after:w-4/5 after:rounded-full after:bg-emerald-600'
+        : 'text-gray-600 hover:text-gray-900'
     }`;
 
   return (
@@ -40,7 +41,10 @@ const Navbar = () => {
                 <NavLink to="/admin" className={linkClass}>Admin</NavLink>
               )}
               <div className="ml-3 flex items-center gap-3 border-l border-gray-200 pl-3">
-                <Link to="/profile" className="text-sm font-medium text-gray-500 hover:text-emerald-600">
+                <Link to="/profile" className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-emerald-600">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">
+                    {getInitials(user?.firstName, user?.lastName)}
+                  </span>
                   {user?.firstName}
                 </Link>
                 <button

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { HiPlus, HiExclamationTriangle } from 'react-icons/hi2';
+import { HiPlus, HiExclamationTriangle, HiMapPin } from 'react-icons/hi2';
 import useReports from '../hooks/useReports';
 import useAuth from '../hooks/useAuth';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import Pagination from '../components/common/Pagination';
+import FilterPanel from '../components/common/FilterPanel';
 import { formatDate } from '../utils/formatters';
 import { SEVERITY_OPTIONS, REPORT_STATUS_OPTIONS, REPORT_CATEGORIES } from '../utils/constants';
 
@@ -54,28 +55,22 @@ const ReportsList = () => {
       </div>
 
       {/* Filters */}
-      <div className="mt-6 flex flex-wrap items-center gap-3">
-        <select
+      <FilterPanel className="mt-6">
+        <FilterPanel.Select
+          label="Severity"
           value={filters.severity}
-          onChange={(e) => setFilters({ ...filters, severity: e.target.value, page: 1 })}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
-        >
-          <option value="">All Severities</option>
-          {SEVERITY_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
-        <select
+          onChange={(val) => setFilters({ ...filters, severity: val, page: 1 })}
+          options={SEVERITY_OPTIONS}
+          allLabel="All Severities"
+        />
+        <FilterPanel.Select
+          label="Status"
           value={filters.status}
-          onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
-        >
-          <option value="">All Statuses</option>
-          {REPORT_STATUS_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
-      </div>
+          onChange={(val) => setFilters({ ...filters, status: val, page: 1 })}
+          options={REPORT_STATUS_OPTIONS}
+          allLabel="All Statuses"
+        />
+      </FilterPanel>
 
       {/* Report cards */}
       {loading ? (
@@ -96,6 +91,21 @@ const ReportsList = () => {
                     <div>
                       <h3 className="font-semibold text-gray-900">{report.title}</h3>
                       <p className="mt-1 text-sm text-gray-500">{report.description}</p>
+
+                      {report.location?.address && (
+                        <p className="mt-2 flex items-center gap-1 text-xs text-gray-400">
+                          <HiMapPin className="h-3.5 w-3.5" /> {report.location.address}
+                        </p>
+                      )}
+
+                      {report.route && (
+                        <p className="mt-1 text-xs text-gray-400">
+                          Route: <Link to={`/routes/${report.route._id || report.route}`} className="text-emerald-600 hover:underline" onClick={(e) => e.stopPropagation()}>
+                            {report.route.title || 'View Route'}
+                          </Link>
+                        </p>
+                      )}
+
                       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
                         <span className="rounded-full bg-gray-100 px-2 py-0.5 text-gray-600">
                           {getCategoryLabel(report.category)}

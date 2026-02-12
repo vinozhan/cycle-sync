@@ -1,6 +1,6 @@
-const FilterPanel = ({ filters, onFilterChange, children }) => {
+const FilterPanel = ({ filters, onFilterChange, children, className = '' }) => {
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className={`flex flex-wrap items-center gap-3 ${className}`}>
       {children}
     </div>
   );

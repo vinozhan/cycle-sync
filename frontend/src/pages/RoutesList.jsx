@@ -11,6 +11,16 @@ import Button from '../components/common/Button';
 import { formatDistance, formatDuration } from '../utils/formatters';
 import { DIFFICULTY_OPTIONS, SURFACE_OPTIONS } from '../utils/constants';
 
+const getDifficultyBadge = (difficulty) => {
+  const map = {
+    easy: 'bg-green-100 text-green-700',
+    moderate: 'bg-yellow-100 text-yellow-700',
+    hard: 'bg-orange-100 text-orange-700',
+    expert: 'bg-red-100 text-red-700',
+  };
+  return map[difficulty] || 'bg-gray-100 text-gray-700';
+};
+
 const RoutesList = () => {
   const { routes, pagination, loading, fetchRoutes } = useRoutes();
   const { isAuthenticated } = useAuth();
@@ -29,10 +39,6 @@ const RoutesList = () => {
     if (filters.search) params.search = filters.search;
     fetchRoutes(params);
   }, [filters, fetchRoutes]);
-
-  const getDifficultyColor = (difficulty) => {
-    return DIFFICULTY_OPTIONS.find((d) => d.value === difficulty)?.color || 'text-gray-600';
-  };
 
   const updateFilter = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
@@ -116,8 +122,14 @@ const RoutesList = () => {
                 </div>
                 <p className="mt-1 line-clamp-2 text-sm text-gray-500">{route.description}</p>
 
-                <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-gray-500">
-                  <span className={`font-medium capitalize ${getDifficultyColor(route.difficulty)}`}>
+                {route.createdBy && (
+                  <p className="mt-2 text-xs text-gray-400">
+                    by {route.createdBy.firstName} {route.createdBy.lastName}
+                  </p>
+                )}
+
+                <div className="mt-3 border-t border-gray-100 pt-3 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                  <span className={`rounded-full px-2 py-0.5 font-medium capitalize ${getDifficultyBadge(route.difficulty)}`}>
                     {route.difficulty}
                   </span>
                   {route.surfaceType && (

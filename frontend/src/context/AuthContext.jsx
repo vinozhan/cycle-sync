@@ -53,6 +53,7 @@ const AuthProvider = ({ children }) => {
 
   const value = {
     user,
+    setUser,
     loading,
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin',
