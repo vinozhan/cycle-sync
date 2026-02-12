@@ -49,5 +49,6 @@ export const REWARD_TIERS = [
   { value: 'platinum', label: 'Platinum', color: 'text-indigo-500' },
 ];
 
-export const DEFAULT_MAP_CENTER = [51.505, -0.09];
-export const DEFAULT_MAP_ZOOM = 13;
+// Sri Lanka center (approx. Kandy area)
+export const DEFAULT_MAP_CENTER = [7.8731, 80.7718];
+export const DEFAULT_MAP_ZOOM = 8;

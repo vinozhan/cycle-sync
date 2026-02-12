@@ -153,6 +153,24 @@ export const updateRouteValidator = [
     .isString(),
 ];
 
+export const previewRouteValidator = [
+  body('start.lat')
+    .isFloat({ min: -90, max: 90 })
+    .withMessage('Start latitude must be between -90 and 90'),
+
+  body('start.lng')
+    .isFloat({ min: -180, max: 180 })
+    .withMessage('Start longitude must be between -180 and 180'),
+
+  body('end.lat')
+    .isFloat({ min: -90, max: 90 })
+    .withMessage('End latitude must be between -90 and 90'),
+
+  body('end.lng')
+    .isFloat({ min: -180, max: 180 })
+    .withMessage('End longitude must be between -180 and 180'),
+];
+
 export const mongoIdParam = [
   param('id')
     .isMongoId()

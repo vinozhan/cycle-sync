@@ -3,6 +3,7 @@ import * as routeController from '../controllers/routeController.js';
 import {
   createRouteValidator,
   updateRouteValidator,
+  previewRouteValidator,
   mongoIdParam,
   listRoutesQuery,
 } from '../validators/routeValidator.js';
@@ -103,6 +104,46 @@ router.get('/', listRoutesQuery, validate, routeController.list);
  *         description: Nearby routes
  */
 router.get('/nearby', routeController.getNearby);
+
+/**
+ * @swagger
+ * /routes/preview:
+ *   post:
+ *     summary: Preview route between two points (returns distance, duration, polyline)
+ *     tags: [Routes]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - start
+ *               - end
+ *             properties:
+ *               start:
+ *                 type: object
+ *                 properties:
+ *                   lat:
+ *                     type: number
+ *                   lng:
+ *                     type: number
+ *               end:
+ *                 type: object
+ *                 properties:
+ *                   lat:
+ *                     type: number
+ *                   lng:
+ *                     type: number
+ *     responses:
+ *       200:
+ *         description: Route preview with distance, duration, and polyline
+ *       401:
+ *         description: Unauthorized
+ */
+router.post('/preview', auth, previewRouteValidator, validate, routeController.preview);
 
 /**
  * @swagger

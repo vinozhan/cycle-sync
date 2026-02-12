@@ -23,6 +23,7 @@ const RouteDetail = () => {
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
   const [submitting, setSubmitting] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [reviewDeleteId, setReviewDeleteId] = useState(null);
 
   useEffect(() => {
     fetchRoute(id);
@@ -38,6 +39,19 @@ const RouteDetail = () => {
       navigate('/routes');
     } catch (err) {
       toast.error(getErrorMessage(err));
+    }
+  };
+
+  const handleReviewDelete = async () => {
+    try {
+      await deleteReview(reviewDeleteId);
+      toast.success('Review deleted');
+      fetchReviews({ route: id, limit: 50 });
+      fetchRoute(id);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setReviewDeleteId(null);
     }
   };
 
@@ -208,11 +222,7 @@ const RouteDetail = () => {
                     <span className="text-xs text-gray-400">{formatDate(review.createdAt)}</span>
                     {user && (review.reviewer?._id === user._id || isAdmin) && (
                       <button
-                        onClick={async () => {
-                          await deleteReview(review._id);
-                          fetchReviews({ route: id, limit: 50 });
-                          fetchRoute(id);
-                        }}
+                        onClick={() => setReviewDeleteId(review._id)}
                         className="text-red-400 hover:text-red-600"
                       >
                         <HiTrash className="h-3.5 w-3.5" />
@@ -236,6 +246,15 @@ const RouteDetail = () => {
         title="Delete Route"
         message="This will permanently delete this route and all associated data."
         confirmLabel="Delete Route"
+      />
+
+      <ConfirmDialog
+        isOpen={!!reviewDeleteId}
+        onClose={() => setReviewDeleteId(null)}
+        onConfirm={handleReviewDelete}
+        title="Delete Review"
+        message="Are you sure you want to delete this review?"
+        confirmLabel="Delete Review"
       />
     </div>
   );

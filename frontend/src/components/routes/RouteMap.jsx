@@ -1,14 +1,12 @@
 import { MapContainer, TileLayer, Marker, Polyline, Popup } from 'react-leaflet';
 import '../../utils/leafletSetup';
+import { startIcon, endIcon } from '../../utils/leafletSetup';
 import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '../../utils/constants';
 
 const RouteMap = ({ route, className = '' }) => {
-  const startCoords = route?.startPoint?.coordinates;
-  const endCoords = route?.endPoint?.coordinates;
-
-  // GeoJSON is [lng, lat], Leaflet needs [lat, lng]
-  const startLatLng = startCoords ? [startCoords[1], startCoords[0]] : null;
-  const endLatLng = endCoords ? [endCoords[1], endCoords[0]] : null;
+  // Model stores { lat, lng } objects
+  const startLatLng = route?.startPoint ? [route.startPoint.lat, route.startPoint.lng] : null;
+  const endLatLng = route?.endPoint ? [route.endPoint.lat, route.endPoint.lng] : null;
 
   const center = startLatLng || DEFAULT_MAP_CENTER;
 
@@ -17,8 +15,8 @@ const RouteMap = ({ route, className = '' }) => {
   if (startLatLng) polylinePositions.push(startLatLng);
   if (route?.waypoints?.length) {
     route.waypoints.forEach((wp) => {
-      if (wp.coordinates) {
-        polylinePositions.push([wp.coordinates[1], wp.coordinates[0]]);
+      if (wp.lat != null && wp.lng != null) {
+        polylinePositions.push([wp.lat, wp.lng]);
       }
     });
   }
@@ -51,13 +49,13 @@ const RouteMap = ({ route, className = '' }) => {
         />
 
         {startLatLng && (
-          <Marker position={startLatLng}>
+          <Marker position={startLatLng} icon={startIcon}>
             <Popup>Start Point</Popup>
           </Marker>
         )}
 
         {endLatLng && (
-          <Marker position={endLatLng}>
+          <Marker position={endLatLng} icon={endIcon}>
             <Popup>End Point</Popup>
           </Marker>
         )}

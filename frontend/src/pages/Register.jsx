@@ -16,20 +16,52 @@ const Register = () => {
     confirmPassword: '',
   });
   const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
 
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
 
+  const validateField = (name, value) => {
+    switch (name) {
+      case 'password': {
+        if (value.length > 0 && value.length < 8) return 'Must be at least 8 characters';
+        if (value.length >= 8 && !/[A-Z]/.test(value)) return 'Must include an uppercase letter';
+        if (value.length >= 8 && !/[a-z]/.test(value)) return 'Must include a lowercase letter';
+        if (value.length >= 8 && !/[0-9]/.test(value)) return 'Must include a number';
+        return '';
+      }
+      case 'confirmPassword': {
+        if (value.length > 0 && value !== formData.password) return 'Passwords do not match';
+        return '';
+      }
+      case 'email': {
+        if (value.length > 0 && !/\S+@\S+\.\S+/.test(value)) return 'Invalid email address';
+        return '';
+      }
+      default:
+        return '';
+    }
+  };
+
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    const error = validateField(name, value);
+    setErrors((prev) => ({ ...prev, [name]: error }));
+    if (name === 'password' && formData.confirmPassword) {
+      const confirmErr = formData.confirmPassword !== value ? 'Passwords do not match' : '';
+      setErrors((prev) => ({ ...prev, confirmPassword: confirmErr }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
+    const passwordErr = validateField('password', formData.password);
+    const confirmErr = validateField('confirmPassword', formData.confirmPassword);
+    if (passwordErr || confirmErr) {
+      setErrors({ ...errors, password: passwordErr, confirmPassword: confirmErr });
       return;
     }
 
@@ -101,8 +133,13 @@ const Register = () => {
               autoComplete="email"
               value={formData.email}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500 focus:outline-none"
+              className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none ${
+                errors.email
+                  ? 'border-red-400 focus:border-red-500'
+                  : 'border-gray-300 focus:border-emerald-500'
+              }`}
             />
+            {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
           </div>
 
           <div>
@@ -118,9 +155,17 @@ const Register = () => {
               autoComplete="new-password"
               value={formData.password}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500 focus:outline-none"
+              className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none ${
+                errors.password
+                  ? 'border-red-400 focus:border-red-500'
+                  : 'border-gray-300 focus:border-emerald-500'
+              }`}
             />
-            <p className="mt-1 text-xs text-gray-400">Min 8 characters, with uppercase, lowercase, and a number</p>
+            {errors.password ? (
+              <p className="mt-1 text-xs text-red-500">{errors.password}</p>
+            ) : (
+              <p className="mt-1 text-xs text-gray-400">Min 8 characters, with uppercase, lowercase, and a number</p>
+            )}
           </div>
 
           <div>
@@ -135,8 +180,13 @@ const Register = () => {
               autoComplete="new-password"
               value={formData.confirmPassword}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500 focus:outline-none"
+              className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none ${
+                errors.confirmPassword
+                  ? 'border-red-400 focus:border-red-500'
+                  : 'border-gray-300 focus:border-emerald-500'
+              }`}
             />
+            {errors.confirmPassword && <p className="mt-1 text-xs text-red-500">{errors.confirmPassword}</p>}
           </div>
 
           <button

@@ -15,7 +15,7 @@ class OpenRouteServiceClient {
     try {
       const response = await axios.post(
         `${this.baseUrl}/directions/${profile}/json`,
-        { coordinates, elevation: true },
+        { coordinates },
         {
           headers: {
             Authorization: this.apiKey,

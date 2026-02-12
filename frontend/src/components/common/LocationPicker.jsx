@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
-import { HiMagnifyingGlass } from 'react-icons/hi2';
+import { HiMagnifyingGlass, HiViewfinderCircle } from 'react-icons/hi2';
 import '../../utils/leafletSetup';
 import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '../../utils/constants';
 
@@ -30,6 +30,7 @@ const LocationPicker = ({ label, value, onChange, className = '' }) => {
   const [searching, setSearching] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [flyTarget, setFlyTarget] = useState(null);
+  const [locating, setLocating] = useState(false);
   const debounceRef = useRef(null);
 
   // value is [lng, lat] (GeoJSON), convert to [lat, lng] for Leaflet
@@ -49,7 +50,7 @@ const LocationPicker = ({ label, value, onChange, className = '' }) => {
     setSearching(true);
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5`
+        `https://nominatim.openstreetmap.org/search?format=json&countrycodes=lk&q=${encodeURIComponent(searchQuery)}&limit=5`
       );
       const data = await res.json();
       setSuggestions(data);
@@ -82,24 +83,52 @@ const LocationPicker = ({ label, value, onChange, className = '' }) => {
     setSuggestions([]);
   };
 
+  const handleLocate = () => {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        onChange([longitude, latitude]); // GeoJSON [lng, lat]
+        setFlyTarget([latitude, longitude]);
+        setSuggestions([]);
+        setLocating(false);
+      },
+      () => setLocating(false),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   return (
     <div className={className}>
       {label && (
         <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
       )}
 
-      {/* Search bar */}
+      {/* Search bar + locate */}
       <div className="relative mb-2">
-        <form onSubmit={handleSearch} className="relative">
-          <HiMagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => handleQueryChange(e.target.value)}
-            placeholder="Search location..."
-            className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-3 text-sm focus:border-emerald-500 focus:outline-none"
-          />
-        </form>
+        <div className="flex gap-2">
+          <form onSubmit={handleSearch} className="relative flex-1">
+            <HiMagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => handleQueryChange(e.target.value)}
+              placeholder="Search location..."
+              className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-3 text-sm focus:border-emerald-500 focus:outline-none"
+            />
+          </form>
+          <button
+            type="button"
+            onClick={handleLocate}
+            disabled={locating}
+            title="Use my location"
+            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+          >
+            <HiViewfinderCircle className={`h-4 w-4 ${locating ? 'animate-pulse' : ''}`} />
+            <span className="hidden sm:inline">{locating ? 'Locating...' : 'My Location'}</span>
+          </button>
+        </div>
 
         {/* Suggestions dropdown */}
         {suggestions.length > 0 && (

@@ -74,6 +74,16 @@ export const getWeather = async (req, res, next) => {
   }
 };
 
+export const preview = async (req, res, next) => {
+  try {
+    const { start, end } = req.body;
+    const result = await routeService.preview(start, end);
+    ApiResponse.success(res, result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getNearby = async (req, res, next) => {
   try {
     const { lat, lng, maxDistance } = req.query;

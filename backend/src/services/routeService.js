@@ -6,22 +6,56 @@ import openRouteServiceClient from './openRouteService.js';
 export const create = async (routeData, userId) => {
   routeData.createdBy = userId;
 
-  const coordinates = [
-    [routeData.startPoint.lng, routeData.startPoint.lat],
-    ...(routeData.waypoints || []).map((wp) => [wp.lng, wp.lat]),
-    [routeData.endPoint.lng, routeData.endPoint.lat],
-  ];
+  // Skip ORS call if polyline already provided (e.g. from preview)
+  if (!routeData.polyline) {
+    const coordinates = [
+      [routeData.startPoint.lng, routeData.startPoint.lat],
+      ...(routeData.waypoints || []).map((wp) => [wp.lng, wp.lat]),
+      [routeData.endPoint.lng, routeData.endPoint.lat],
+    ];
 
-  const orsData = await openRouteServiceClient.getDirections(coordinates);
-  if (orsData) {
-    routeData.distance = orsData.distance;
-    routeData.estimatedDuration = orsData.duration;
-    routeData.elevationGain = orsData.elevationGain;
-    routeData.polyline = orsData.polyline;
+    const orsData = await openRouteServiceClient.getDirections(coordinates);
+    if (orsData) {
+      routeData.distance = orsData.distance;
+      routeData.estimatedDuration = orsData.duration;
+      routeData.elevationGain = orsData.elevationGain;
+      routeData.polyline = orsData.polyline;
+    }
   }
 
   const route = await Route.create(routeData);
   return route.populate('createdBy', 'firstName lastName avatar');
+};
+
+export const preview = async (start, end) => {
+  const coordinates = [
+    [start.lng, start.lat],
+    [end.lng, end.lat],
+  ];
+
+  const orsData = await openRouteServiceClient.getDirections(coordinates);
+  if (orsData) {
+    return orsData;
+  }
+
+  // Fallback: Haversine straight-line distance
+  const R = 6371;
+  const dLat = ((end.lat - start.lat) * Math.PI) / 180;
+  const dLng = ((end.lng - start.lng) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((start.lat * Math.PI) / 180) *
+      Math.cos((end.lat * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = parseFloat((R * c).toFixed(2));
+
+  return {
+    distance,
+    duration: parseFloat(((distance / 15) * 60).toFixed(1)),
+    elevationGain: 0,
+    polyline: '',
+  };
 };
 
 export const list = async (queryParams) => {
