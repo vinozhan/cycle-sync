@@ -55,7 +55,10 @@ const rideSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-rideSchema.index({ user: 1, status: 1 });
+rideSchema.index(
+  { user: 1, status: 1 },
+  { unique: true, partialFilterExpression: { status: 'active' } }
+);
 rideSchema.index({ user: 1, createdAt: -1 });
 rideSchema.index({ route: 1 });
 

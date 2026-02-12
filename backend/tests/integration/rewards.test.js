@@ -46,7 +46,7 @@ const validReward = {
   description: 'Create your first cycling route',
   icon: 'trophy',
   category: 'routes',
-  criteria: { type: 'routes_created', threshold: 1 },
+  criteria: { type: 'routesCreated', threshold: 1 },
   pointsAwarded: 50,
   tier: 'bronze',
 };

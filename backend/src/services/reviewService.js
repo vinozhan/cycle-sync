@@ -43,15 +43,15 @@ export const create = async (reviewData, userId) => {
     throw ApiError.badRequest('You cannot review your own route');
   }
 
-  const existing = await Review.findOne({
-    route: reviewData.route,
-    reviewer: userId,
-  });
-  if (existing) {
-    throw ApiError.conflict('You have already reviewed this route');
+  let review;
+  try {
+    review = await Review.create(reviewData);
+  } catch (error) {
+    if (error.code === 11000) {
+      throw ApiError.conflict('You have already reviewed this route');
+    }
+    throw error;
   }
-
-  const review = await Review.create(reviewData);
 
   await recalculateRouteRating(route._id);
 

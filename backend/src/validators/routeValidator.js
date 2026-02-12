@@ -7,14 +7,16 @@ export const createRouteValidator = [
     .notEmpty()
     .withMessage('Route title is required')
     .isLength({ max: 100 })
-    .withMessage('Title cannot exceed 100 characters'),
+    .withMessage('Title cannot exceed 100 characters')
+    .escape(),
 
   body('description')
     .trim()
     .notEmpty()
     .withMessage('Route description is required')
     .isLength({ max: 2000 })
-    .withMessage('Description cannot exceed 2000 characters'),
+    .withMessage('Description cannot exceed 2000 characters')
+    .escape(),
 
   body('startPoint.lat')
     .notEmpty()
@@ -31,7 +33,8 @@ export const createRouteValidator = [
   body('startPoint.name')
     .optional()
     .trim()
-    .isString(),
+    .isString()
+    .escape(),
 
   body('endPoint.lat')
     .notEmpty()
@@ -48,7 +51,8 @@ export const createRouteValidator = [
   body('endPoint.name')
     .optional()
     .trim()
-    .isString(),
+    .isString()
+    .escape(),
 
   body('waypoints')
     .optional()
@@ -97,17 +101,20 @@ export const createRouteValidator = [
     .trim()
     .isString()
     .isLength({ max: 30 })
-    .withMessage('Each tag cannot exceed 30 characters'),
+    .withMessage('Each tag cannot exceed 30 characters')
+    .escape(),
 
   body('city')
     .optional()
     .trim()
-    .isString(),
+    .isString()
+    .escape(),
 
   body('country')
     .optional()
     .trim()
-    .isString(),
+    .isString()
+    .escape(),
 ];
 
 export const updateRouteValidator = [
@@ -117,7 +124,8 @@ export const updateRouteValidator = [
     .notEmpty()
     .withMessage('Title cannot be empty')
     .isLength({ max: 100 })
-    .withMessage('Title cannot exceed 100 characters'),
+    .withMessage('Title cannot exceed 100 characters')
+    .escape(),
 
   body('description')
     .optional()
@@ -125,7 +133,8 @@ export const updateRouteValidator = [
     .notEmpty()
     .withMessage('Description cannot be empty')
     .isLength({ max: 2000 })
-    .withMessage('Description cannot exceed 2000 characters'),
+    .withMessage('Description cannot exceed 2000 characters')
+    .escape(),
 
   body('difficulty')
     .optional()
@@ -145,12 +154,14 @@ export const updateRouteValidator = [
   body('city')
     .optional()
     .trim()
-    .isString(),
+    .isString()
+    .escape(),
 
   body('country')
     .optional()
     .trim()
-    .isString(),
+    .isString()
+    .escape(),
 ];
 
 export const previewRouteValidator = [

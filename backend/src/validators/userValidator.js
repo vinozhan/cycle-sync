@@ -7,7 +7,8 @@ export const updateUserValidator = [
     .notEmpty()
     .withMessage('First name cannot be empty')
     .isLength({ max: 50 })
-    .withMessage('First name cannot exceed 50 characters'),
+    .withMessage('First name cannot exceed 50 characters')
+    .escape(),
 
   body('lastName')
     .optional()
@@ -15,12 +16,14 @@ export const updateUserValidator = [
     .notEmpty()
     .withMessage('Last name cannot be empty')
     .isLength({ max: 50 })
-    .withMessage('Last name cannot exceed 50 characters'),
+    .withMessage('Last name cannot exceed 50 characters')
+    .escape(),
 
   body('bio')
     .optional()
     .isLength({ max: 500 })
-    .withMessage('Bio cannot exceed 500 characters'),
+    .withMessage('Bio cannot exceed 500 characters')
+    .escape(),
 
   body('avatar')
     .optional()
@@ -35,12 +38,14 @@ export const updateUserValidator = [
   body('location.city')
     .optional()
     .trim()
-    .isString(),
+    .isString()
+    .escape(),
 
   body('location.country')
     .optional()
     .trim()
-    .isString(),
+    .isString()
+    .escape(),
 
   body('location.coordinates.lat')
     .optional()

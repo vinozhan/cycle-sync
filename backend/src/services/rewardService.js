@@ -100,38 +100,38 @@ export const checkAndGrantRewards = async (userId) => {
     let qualifies = false;
     const { type, threshold } = reward.criteria;
 
-    switch (type) {
-      case 'totalDistance':
-        qualifies = stats.totalDistance >= threshold;
-        break;
-      case 'routesCreated':
-        qualifies = stats.routesCreated >= threshold;
-        break;
-      case 'reportsSubmitted':
-        qualifies = stats.reportsSubmitted >= threshold;
-        break;
-      case 'reviewsWritten':
-        qualifies = stats.reviewsWritten >= threshold;
-        break;
-      case 'ridesCompleted':
-        qualifies = stats.ridesCompleted >= threshold;
-        break;
-      default:
-        break;
+    const statValue = {
+      totalDistance: stats.totalDistance,
+      routesCreated: stats.routesCreated,
+      reportsSubmitted: stats.reportsSubmitted,
+      reviewsWritten: stats.reviewsWritten,
+      ridesCompleted: stats.ridesCompleted,
+    }[type];
+
+    if (statValue != null) {
+      qualifies = statValue >= threshold;
     }
 
     if (qualifies) {
-      user.achievements.push(reward._id);
-      user.totalPoints += reward.pointsAwarded;
-      reward.earnedBy.push(userId);
-      await reward.save();
-      granted.push(reward);
+      // Atomic update to prevent double-granting
+      const updated = await User.findOneAndUpdate(
+        { _id: userId, achievements: { $ne: reward._id } },
+        {
+          $addToSet: { achievements: reward._id },
+          $inc: { totalPoints: reward.pointsAwarded },
+        },
+        { new: true }
+      );
+
+      if (updated) {
+        await Reward.findByIdAndUpdate(reward._id, {
+          $addToSet: { earnedBy: userId },
+        });
+        granted.push(reward);
+      }
     }
   }
 
-  if (granted.length > 0) {
-    await user.save();
-  }
-
-  return { granted, totalAchievements: user.achievements.length };
+  const updatedUser = await User.findById(userId);
+  return { granted, totalAchievements: updatedUser.achievements.length };
 };

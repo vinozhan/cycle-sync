@@ -41,7 +41,7 @@ const RouteMap = ({ route, className = '' }) => {
         center={center}
         zoom={startLatLng ? 14 : DEFAULT_MAP_ZOOM}
         scrollWheelZoom={false}
-        className="h-[400px] w-full"
+        className="h-[300px] w-full sm:h-[400px]"
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'

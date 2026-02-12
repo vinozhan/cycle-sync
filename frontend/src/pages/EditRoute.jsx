@@ -43,12 +43,16 @@ const EditRoute = () => {
   }, [route]);
 
   const isOwner = user && route?.createdBy?._id === user._id;
+  const unauthorized = route && !isOwner && !isAdmin;
+
+  useEffect(() => {
+    if (unauthorized) {
+      navigate('/routes');
+    }
+  }, [unauthorized, navigate]);
 
   if (loading) return <LoadingSpinner size="lg" className="min-h-screen" />;
-  if (route && !isOwner && !isAdmin) {
-    navigate('/routes');
-    return null;
-  }
+  if (unauthorized) return null;
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

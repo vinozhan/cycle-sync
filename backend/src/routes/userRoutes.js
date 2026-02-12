@@ -9,6 +9,7 @@ import {
 import validate from '../middleware/validate.js';
 import auth from '../middleware/auth.js';
 import authorize from '../middleware/authorize.js';
+import { authLimiter } from '../middleware/rateLimiter.js';
 import { ROLES } from '../utils/constants.js';
 
 const router = Router();
@@ -166,6 +167,7 @@ router.put(
 router.patch(
   '/change-password',
   auth,
+  authLimiter,
   changePasswordValidator,
   validate,
   userController.changePassword

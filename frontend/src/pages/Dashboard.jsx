@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { HiTrophy, HiMapPin, HiShieldCheck, HiStar, HiChartBar, HiPlus, HiBolt, HiGlobeAlt } from 'react-icons/hi2';
+import toast from 'react-hot-toast';
 import useAuth from '../hooks/useAuth';
 import api from '../services/api';
 import LoadingSpinner from '../components/common/LoadingSpinner';
@@ -24,15 +25,13 @@ const Dashboard = () => {
         setStats(statsRes.data.data.stats);
         setAchievements(achievementsRes.data.data.achievements || []);
       } catch {
-        // Silently handle
+        toast.error('Failed to load dashboard data');
       } finally {
         setLoading(false);
       }
     };
     if (user) fetchData();
   }, [user]);
-
-  if (loading) return <LoadingSpinner size="lg" className="min-h-screen" />;
 
   const statCards = [
     { label: 'Total Points', value: stats?.totalPoints || 0, icon: HiChartBar, color: 'text-emerald-600 bg-emerald-50' },
@@ -90,7 +89,11 @@ const Dashboard = () => {
               <stat.icon className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+              {loading ? (
+                <div className="h-8 w-16 animate-pulse rounded bg-gray-200" />
+              ) : (
+                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+              )}
               <p className="text-sm text-gray-500">{stat.label}</p>
             </div>
           </div>

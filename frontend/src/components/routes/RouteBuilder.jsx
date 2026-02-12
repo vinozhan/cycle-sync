@@ -384,7 +384,7 @@ const RouteBuilder = ({ onRouteData, className = '' }) => {
           center={DEFAULT_MAP_CENTER}
           zoom={DEFAULT_MAP_ZOOM}
           scrollWheelZoom={true}
-          className="h-[400px] w-full cursor-crosshair"
+          className="h-[300px] w-full cursor-crosshair sm:h-[400px]"
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'

@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { HiStar, HiMapPin, HiTrash, HiPencil, HiPlay, HiStop, HiXMark, HiClock, HiTrophy, HiGlobeAmericas } from 'react-icons/hi2';
+import { HiStar, HiMapPin, HiTrash, HiPencil, HiPlay, HiStop, HiXMark, HiClock, HiTrophy, HiGlobeAmericas, HiArrowLeft, HiShare } from 'react-icons/hi2';
 import toast from 'react-hot-toast';
 import useRoutes from '../hooks/useRoutes';
 import useReviews from '../hooks/useReviews';
@@ -176,6 +176,11 @@ const RouteDetail = () => {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      {/* Back link */}
+      <Link to="/routes" className="mb-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-emerald-600">
+        <HiArrowLeft className="h-4 w-4" /> Back to Routes
+      </Link>
+
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
@@ -190,18 +195,30 @@ const RouteDetail = () => {
             )}
           </p>
         </div>
-        {(isOwner || isAdmin) && (
-          <div className="flex gap-2">
-            <Link to={`/routes/${id}/edit`}>
-              <Button variant="outline" size="sm">
-                <HiPencil className="h-4 w-4" /> Edit
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              navigator.clipboard.writeText(window.location.href);
+              toast.success('Link copied to clipboard');
+            }}
+          >
+            <HiShare className="h-4 w-4" /> Share
+          </Button>
+          {(isOwner || isAdmin) && (
+            <>
+              <Link to={`/routes/${id}/edit`}>
+                <Button variant="outline" size="sm">
+                  <HiPencil className="h-4 w-4" /> Edit
+                </Button>
+              </Link>
+              <Button variant="danger" size="sm" onClick={() => setDeleteConfirm(true)}>
+                <HiTrash className="h-4 w-4" /> Delete
               </Button>
-            </Link>
-            <Button variant="danger" size="sm" onClick={() => setDeleteConfirm(true)}>
-              <HiTrash className="h-4 w-4" /> Delete
-            </Button>
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Ride Actions */}

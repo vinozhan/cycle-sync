@@ -23,13 +23,21 @@ export const startRide = async (routeId, userId) => {
     throw ApiError.notFound('Route not found');
   }
 
-  const ride = await Ride.create({
-    user: userId,
-    route: routeId,
-    createdBy: userId,
-    status: 'active',
-    startedAt: new Date(),
-  });
+  let ride;
+  try {
+    ride = await Ride.create({
+      user: userId,
+      route: routeId,
+      createdBy: userId,
+      status: 'active',
+      startedAt: new Date(),
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      throw ApiError.conflict('You already have an active ride');
+    }
+    throw error;
+  }
 
   const populated = await Ride.findById(ride._id)
     .populate('route', 'title distance')
@@ -39,17 +47,22 @@ export const startRide = async (routeId, userId) => {
 };
 
 export const completeRide = async (rideId, userId) => {
-  const ride = await Ride.findById(rideId);
+  // Use atomic findOneAndUpdate to prevent double-completion race condition
+  const ride = await Ride.findOneAndUpdate(
+    { _id: rideId, user: userId, status: 'active', isActive: true },
+    { status: 'completed', completedAt: new Date() },
+    { new: true }
+  );
 
-  if (!ride || !ride.isActive) {
-    throw ApiError.notFound('Ride not found');
-  }
-
-  if (ride.user.toString() !== userId) {
-    throw ApiError.forbidden('Not authorized to complete this ride');
-  }
-
-  if (ride.status !== 'active') {
+  if (!ride) {
+    // Determine the specific error
+    const existing = await Ride.findById(rideId);
+    if (!existing || !existing.isActive) {
+      throw ApiError.notFound('Ride not found');
+    }
+    if (existing.user.toString() !== userId) {
+      throw ApiError.forbidden('Not authorized to complete this ride');
+    }
     throw ApiError.badRequest('Ride is not active');
   }
 
@@ -58,8 +71,6 @@ export const completeRide = async (rideId, userId) => {
   const duration = parseFloat(((Date.now() - ride.startedAt.getTime()) / 60000).toFixed(2));
   const co2Saved = parseFloat((distance * CO2_PER_KM).toFixed(2));
 
-  ride.status = 'completed';
-  ride.completedAt = new Date();
   ride.duration = duration;
   ride.distance = distance;
   ride.co2Saved = co2Saved;

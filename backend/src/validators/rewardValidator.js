@@ -7,14 +7,16 @@ export const createRewardValidator = [
     .notEmpty()
     .withMessage('Reward name is required')
     .isLength({ max: 100 })
-    .withMessage('Name cannot exceed 100 characters'),
+    .withMessage('Name cannot exceed 100 characters')
+    .escape(),
 
   body('description')
     .trim()
     .notEmpty()
     .withMessage('Description is required')
     .isLength({ max: 500 })
-    .withMessage('Description cannot exceed 500 characters'),
+    .withMessage('Description cannot exceed 500 characters')
+    .escape(),
 
   body('icon')
     .trim()
@@ -30,7 +32,8 @@ export const createRewardValidator = [
   body('criteria.type')
     .notEmpty()
     .withMessage('Criteria type is required')
-    .isString(),
+    .isIn(['totalDistance', 'routesCreated', 'reportsSubmitted', 'reviewsWritten', 'ridesCompleted'])
+    .withMessage('Criteria type must be one of: totalDistance, routesCreated, reportsSubmitted, reviewsWritten, ridesCompleted'),
 
   body('criteria.threshold')
     .notEmpty()
@@ -58,7 +61,8 @@ export const updateRewardValidator = [
     .notEmpty()
     .withMessage('Name cannot be empty')
     .isLength({ max: 100 })
-    .withMessage('Name cannot exceed 100 characters'),
+    .withMessage('Name cannot exceed 100 characters')
+    .escape(),
 
   body('description')
     .optional()
@@ -66,7 +70,8 @@ export const updateRewardValidator = [
     .notEmpty()
     .withMessage('Description cannot be empty')
     .isLength({ max: 500 })
-    .withMessage('Description cannot exceed 500 characters'),
+    .withMessage('Description cannot exceed 500 characters')
+    .escape(),
 
   body('icon')
     .optional()

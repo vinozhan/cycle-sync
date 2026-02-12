@@ -122,10 +122,22 @@ export const remove = async (id, userId, userRole) => {
   await Report.findByIdAndDelete(id);
 };
 
+const VALID_TRANSITIONS = {
+  open: ['under_review', 'resolved', 'dismissed'],
+  under_review: ['resolved', 'dismissed'],
+  resolved: [],
+  dismissed: [],
+};
+
 export const updateStatus = async (id, status, adminNotes) => {
   const report = await Report.findById(id);
   if (!report) {
     throw ApiError.notFound('Report not found');
+  }
+
+  const allowed = VALID_TRANSITIONS[report.status] || [];
+  if (!allowed.includes(status)) {
+    throw ApiError.badRequest(`Cannot transition from '${report.status}' to '${status}'`);
   }
 
   report.status = status;

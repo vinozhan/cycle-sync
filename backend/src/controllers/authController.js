@@ -3,8 +3,8 @@ import ApiResponse from '../utils/ApiResponse.js';
 
 const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  secure: process.env.NODE_ENV !== 'development',
+  sameSite: process.env.NODE_ENV !== 'development' ? 'none' : 'lax',
   maxAge: 7 * 24 * 60 * 60 * 1000,
   path: '/',
 };

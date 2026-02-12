@@ -7,14 +7,16 @@ export const createReportValidator = [
     .notEmpty()
     .withMessage('Report title is required')
     .isLength({ max: 150 })
-    .withMessage('Title cannot exceed 150 characters'),
+    .withMessage('Title cannot exceed 150 characters')
+    .escape(),
 
   body('description')
     .trim()
     .notEmpty()
     .withMessage('Description is required')
     .isLength({ max: 2000 })
-    .withMessage('Description cannot exceed 2000 characters'),
+    .withMessage('Description cannot exceed 2000 characters')
+    .escape(),
 
   body('route')
     .optional()
@@ -48,7 +50,8 @@ export const createReportValidator = [
   body('location.address')
     .optional()
     .trim()
-    .isString(),
+    .isString()
+    .escape(),
 
   body('imageUrl')
     .optional()
@@ -63,7 +66,8 @@ export const updateReportValidator = [
     .notEmpty()
     .withMessage('Title cannot be empty')
     .isLength({ max: 150 })
-    .withMessage('Title cannot exceed 150 characters'),
+    .withMessage('Title cannot exceed 150 characters')
+    .escape(),
 
   body('description')
     .optional()
@@ -71,7 +75,8 @@ export const updateReportValidator = [
     .notEmpty()
     .withMessage('Description cannot be empty')
     .isLength({ max: 2000 })
-    .withMessage('Description cannot exceed 2000 characters'),
+    .withMessage('Description cannot exceed 2000 characters')
+    .escape(),
 
   body('category')
     .optional()
@@ -98,7 +103,8 @@ export const updateStatusValidator = [
   body('adminNotes')
     .optional()
     .isLength({ max: 1000 })
-    .withMessage('Admin notes cannot exceed 1000 characters'),
+    .withMessage('Admin notes cannot exceed 1000 characters')
+    .escape(),
 ];
 
 export const mongoIdParam = [

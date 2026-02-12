@@ -6,14 +6,16 @@ export const registerValidator = [
     .notEmpty()
     .withMessage('First name is required')
     .isLength({ max: 50 })
-    .withMessage('First name cannot exceed 50 characters'),
+    .withMessage('First name cannot exceed 50 characters')
+    .escape(),
 
   body('lastName')
     .trim()
     .notEmpty()
     .withMessage('Last name is required')
     .isLength({ max: 50 })
-    .withMessage('Last name cannot exceed 50 characters'),
+    .withMessage('Last name cannot exceed 50 characters')
+    .escape(),
 
   body('email')
     .trim()

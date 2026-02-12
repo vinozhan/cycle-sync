@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import swaggerUi from 'swagger-ui-express';
+import mongoose from 'mongoose';
 
 import corsOptions from './config/cors.js';
 import swaggerSpec from './config/swagger.js';
@@ -12,6 +13,11 @@ import errorHandler from './middleware/errorHandler.js';
 import routes from './routes/index.js';
 
 const app = express();
+
+// Trust proxy in non-development environments (required for rate limiting behind reverse proxy)
+if (process.env.NODE_ENV !== 'development') {
+  app.set('trust proxy', 1);
+}
 
 // Security middleware
 app.use(helmet());
@@ -36,7 +42,10 @@ app.use('/api', routes);
 
 // Health check
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+  const dbReady = mongoose.connection.readyState === 1;
+  const status = dbReady ? 'ok' : 'degraded';
+  const statusCode = dbReady ? 200 : 503;
+  res.status(statusCode).json({ status, timestamp: new Date().toISOString(), db: dbReady });
 });
 
 // 404 handler

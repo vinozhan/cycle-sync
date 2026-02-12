@@ -21,17 +21,18 @@ const getUserProgress = (reward, userStats) => {
   if (!userStats || !reward.criteria) return null;
 
   const typeMap = {
-    routes_created: userStats.routesCreated,
-    reports_submitted: userStats.reportsSubmitted,
-    reviews_written: userStats.reviewsWritten,
-    total_distance: userStats.totalDistance,
-    total_points: userStats.totalPoints,
+    routesCreated: userStats.routesCreated,
+    reportsSubmitted: userStats.reportsSubmitted,
+    reviewsWritten: userStats.reviewsWritten,
+    totalDistance: userStats.totalDistance,
+    totalPoints: userStats.totalPoints,
+    ridesCompleted: userStats.ridesCompleted,
   };
 
   const current = typeMap[reward.criteria.type];
   const threshold = reward.criteria.threshold;
 
-  if (current == null || threshold == null) return null;
+  if (current == null || threshold == null || threshold <= 0) return null;
 
   const percentage = Math.min(Math.round((current / threshold) * 100), 100);
   return { current, threshold, percentage };

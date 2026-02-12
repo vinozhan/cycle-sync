@@ -39,7 +39,7 @@ export const getUserById = async (id) => {
 };
 
 export const updateUser = async (id, updateData, requestingUserId, requestingRole) => {
-  if (id !== requestingUserId && requestingRole !== 'admin') {
+  if (id.toString() !== requestingUserId.toString() && requestingRole !== 'admin') {
     throw ApiError.forbidden('You can only update your own profile');
   }
 
@@ -78,6 +78,7 @@ export const changePassword = async (userId, currentPassword, newPassword) => {
   }
 
   user.password = newPassword;
+  user.refreshToken = null;
   await user.save();
 };
 

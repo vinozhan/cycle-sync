@@ -45,19 +45,20 @@ const EditReport = () => {
   }, [report]);
 
   const isOwner = user && report?.reportedBy?._id === user._id;
+  const unauthorized = report && !isOwner && !isAdmin;
+  const notEditable = report && report.status !== 'open';
+
+  useEffect(() => {
+    if (unauthorized) {
+      navigate('/reports');
+    } else if (notEditable) {
+      toast.error('Can only edit reports with open status');
+      navigate(`/reports/${id}`);
+    }
+  }, [unauthorized, notEditable, navigate, id]);
 
   if (loading) return <LoadingSpinner size="lg" className="min-h-screen" />;
-
-  if (report && !isOwner && !isAdmin) {
-    navigate('/reports');
-    return null;
-  }
-
-  if (report && report.status !== 'open') {
-    navigate(`/reports/${id}`);
-    toast.error('Can only edit reports with open status');
-    return null;
-  }
+  if (unauthorized || notEditable) return null;
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

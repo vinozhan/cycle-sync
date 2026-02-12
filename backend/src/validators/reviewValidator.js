@@ -17,14 +17,16 @@ export const createReviewValidator = [
     .optional()
     .trim()
     .isLength({ max: 100 })
-    .withMessage('Title cannot exceed 100 characters'),
+    .withMessage('Title cannot exceed 100 characters')
+    .escape(),
 
   body('comment')
     .trim()
     .notEmpty()
     .withMessage('Comment is required')
     .isLength({ max: 1500 })
-    .withMessage('Comment cannot exceed 1500 characters'),
+    .withMessage('Comment cannot exceed 1500 characters')
+    .escape(),
 
   body('safetyScore')
     .optional()
@@ -54,7 +56,8 @@ export const updateReviewValidator = [
     .notEmpty()
     .withMessage('Title cannot be empty')
     .isLength({ max: 100 })
-    .withMessage('Title cannot exceed 100 characters'),
+    .withMessage('Title cannot exceed 100 characters')
+    .escape(),
 
   body('comment')
     .optional()
@@ -62,7 +65,8 @@ export const updateReviewValidator = [
     .notEmpty()
     .withMessage('Comment cannot be empty')
     .isLength({ max: 1500 })
-    .withMessage('Comment cannot exceed 1500 characters'),
+    .withMessage('Comment cannot exceed 1500 characters')
+    .escape(),
 
   body('safetyScore')
     .optional()

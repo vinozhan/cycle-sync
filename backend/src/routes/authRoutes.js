@@ -100,7 +100,7 @@ router.post('/login', authLimiter, loginValidator, validate, authController.logi
  *       401:
  *         description: Invalid or expired refresh token
  */
-router.post('/refresh', authController.refresh);
+router.post('/refresh', authLimiter, authController.refresh);
 
 /**
  * @swagger

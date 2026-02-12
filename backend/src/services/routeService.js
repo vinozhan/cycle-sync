@@ -29,10 +29,7 @@ export const create = async (routeData, userId) => {
   const route = await Route.create(routeData);
 
   await User.findByIdAndUpdate(userId, {
-    $inc: {
-      totalPoints: POINTS.ROUTE_CREATED,
-      totalDistance: route.distance || 0,
-    },
+    $inc: { totalPoints: POINTS.ROUTE_CREATED },
   });
 
   try {
@@ -78,6 +75,10 @@ export const preview = async (start, end) => {
 export const list = async (queryParams) => {
   const { page, limit, skip, sort } = buildPagination(queryParams);
   const filter = { isActive: true };
+
+  if (queryParams.createdBy) {
+    filter.createdBy = queryParams.createdBy;
+  }
 
   if (queryParams.difficulty) {
     filter.difficulty = queryParams.difficulty;
@@ -177,8 +178,9 @@ export const verify = async (id) => {
 
 export const getNearby = async (lat, lng, maxDistanceKm = 10, queryParams = {}) => {
   const { page, limit, skip } = buildPagination(queryParams);
+  const clampedDistance = Math.min(maxDistanceKm, 100);
 
-  const degreeRange = maxDistanceKm / 111;
+  const degreeRange = clampedDistance / 111;
   const filter = {
     isActive: true,
     'startPoint.lat': { $gte: lat - degreeRange, $lte: lat + degreeRange },
