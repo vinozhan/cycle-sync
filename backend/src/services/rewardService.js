@@ -3,6 +3,7 @@ import User from '../models/User.js';
 import Route from '../models/Route.js';
 import Report from '../models/Report.js';
 import Review from '../models/Review.js';
+import Ride from '../models/Ride.js';
 import ApiError from '../utils/ApiError.js';
 import { buildPagination, paginateResult } from '../utils/pagination.js';
 
@@ -64,10 +65,11 @@ export const remove = async (id) => {
 };
 
 const getUserStats = async (userId) => {
-  const [routeCount, reportCount, reviewCount, user] = await Promise.all([
+  const [routeCount, reportCount, reviewCount, rideCount, user] = await Promise.all([
     Route.countDocuments({ createdBy: userId, isActive: true }),
     Report.countDocuments({ reportedBy: userId }),
     Review.countDocuments({ reviewer: userId }),
+    Ride.countDocuments({ user: userId, status: 'completed', isActive: true }),
     User.findById(userId),
   ]);
 
@@ -76,6 +78,7 @@ const getUserStats = async (userId) => {
     routesCreated: routeCount,
     reportsSubmitted: reportCount,
     reviewsWritten: reviewCount,
+    ridesCompleted: rideCount,
   };
 };
 
@@ -109,6 +112,9 @@ export const checkAndGrantRewards = async (userId) => {
         break;
       case 'reviewsWritten':
         qualifies = stats.reviewsWritten >= threshold;
+        break;
+      case 'ridesCompleted':
+        qualifies = stats.ridesCompleted >= threshold;
         break;
       default:
         break;

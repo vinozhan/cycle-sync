@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { HiTrophy, HiMapPin, HiShieldCheck, HiStar, HiChartBar, HiPlus } from 'react-icons/hi2';
+import { HiTrophy, HiMapPin, HiShieldCheck, HiStar, HiChartBar, HiPlus, HiBolt, HiGlobeAlt } from 'react-icons/hi2';
 import useAuth from '../hooks/useAuth';
 import api from '../services/api';
 import LoadingSpinner from '../components/common/LoadingSpinner';
@@ -35,7 +35,9 @@ const Dashboard = () => {
   if (loading) return <LoadingSpinner size="lg" className="min-h-screen" />;
 
   const statCards = [
-    { label: 'Total Points', value: user?.totalPoints || 0, icon: HiChartBar, color: 'text-emerald-600 bg-emerald-50' },
+    { label: 'Total Points', value: stats?.totalPoints || 0, icon: HiChartBar, color: 'text-emerald-600 bg-emerald-50' },
+    { label: 'Rides Completed', value: stats?.ridesCompleted || 0, icon: HiBolt, color: 'text-cyan-600 bg-cyan-50' },
+    { label: 'CO2 Saved', value: `${(stats?.co2Saved || 0).toFixed(1)} kg`, icon: HiGlobeAlt, color: 'text-green-600 bg-green-50' },
     { label: 'Routes Created', value: stats?.routesCreated || 0, icon: HiMapPin, color: 'text-blue-600 bg-blue-50' },
     { label: 'Reports Filed', value: stats?.reportsSubmitted || 0, icon: HiShieldCheck, color: 'text-amber-600 bg-amber-50' },
     { label: 'Reviews Written', value: stats?.reviewsWritten || 0, icon: HiStar, color: 'text-purple-600 bg-purple-50' },
@@ -47,7 +49,7 @@ const Dashboard = () => {
     return REWARD_TIERS.find((t) => t.value === tier)?.color || 'text-gray-600';
   };
 
-  const isNewUser = !stats?.routesCreated && !stats?.reportsSubmitted && !stats?.reviewsWritten && achievements.length === 0;
+  const isNewUser = !stats?.routesCreated && !stats?.reportsSubmitted && !stats?.reviewsWritten && !stats?.ridesCompleted && achievements.length === 0;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -78,7 +80,7 @@ const Dashboard = () => {
       )}
 
       {/* Stats Grid */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat) => (
           <div
             key={stat.label}

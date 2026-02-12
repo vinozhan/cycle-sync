@@ -32,3 +32,11 @@ export const endIcon = L.divIcon({
   iconAnchor: [12, 41],
   popupAnchor: [0, -36],
 });
+
+export const hazardIcon = L.divIcon({
+  html: pinSvg('#f59e0b'),
+  className: '',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [0, -36],
+});

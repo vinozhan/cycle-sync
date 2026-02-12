@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { HiStar, HiMapPin, HiTrash, HiPencil } from 'react-icons/hi2';
+import { HiStar, HiMapPin, HiTrash, HiPencil, HiPlay, HiStop, HiXMark } from 'react-icons/hi2';
 import toast from 'react-hot-toast';
 import useRoutes from '../hooks/useRoutes';
 import useReviews from '../hooks/useReviews';
+import useRides from '../hooks/useRides';
 import useAuth from '../hooks/useAuth';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import Button from '../components/common/Button';
@@ -18,10 +19,12 @@ const RouteDetail = () => {
   const navigate = useNavigate();
   const { route, loading, fetchRoute, deleteRoute } = useRoutes();
   const { reviews, fetchReviews, createReview, deleteReview } = useReviews();
-  const { user, isAuthenticated, isAdmin } = useAuth();
+  const { activeRide, fetchActiveRide, startRide, completeRide, cancelRide } = useRides();
+  const { user, isAuthenticated, isAdmin, fetchUser } = useAuth();
 
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [rideLoading, setRideLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [reviewDeleteId, setReviewDeleteId] = useState(null);
 
@@ -29,6 +32,12 @@ const RouteDetail = () => {
     fetchRoute(id);
     fetchReviews({ route: id, limit: 50 });
   }, [id, fetchRoute, fetchReviews]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchActiveRide();
+    }
+  }, [isAuthenticated, fetchActiveRide]);
 
   const isOwner = user && route?.createdBy?._id === user._id;
 
@@ -71,6 +80,46 @@ const RouteDetail = () => {
     }
   };
 
+  const handleStartRide = async () => {
+    setRideLoading(true);
+    try {
+      await startRide(id);
+      toast.success('Ride started! Enjoy your cycling.');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setRideLoading(false);
+    }
+  };
+
+  const handleCompleteRide = async () => {
+    setRideLoading(true);
+    try {
+      const ride = await completeRide(activeRide._id);
+      toast.success(`Ride completed! +10 points, ${ride.co2Saved} kg CO2 saved`);
+      fetchUser();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setRideLoading(false);
+    }
+  };
+
+  const handleCancelRide = async () => {
+    setRideLoading(true);
+    try {
+      await cancelRide(activeRide._id);
+      toast.success('Ride cancelled');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setRideLoading(false);
+    }
+  };
+
+  const isActiveOnThisRoute = activeRide && activeRide.route?._id === id;
+  const hasActiveRideElsewhere = activeRide && activeRide.route?._id !== id;
+
   if (loading) return <LoadingSpinner size="lg" className="min-h-screen" />;
   if (!route) return <p className="py-20 text-center text-gray-500">Route not found.</p>;
 
@@ -103,6 +152,32 @@ const RouteDetail = () => {
           </div>
         )}
       </div>
+
+      {/* Ride Actions */}
+      {isAuthenticated && (
+        <div className="mt-4 flex items-center gap-3">
+          {!activeRide && (
+            <Button onClick={handleStartRide} loading={rideLoading} size="sm">
+              <HiPlay className="h-4 w-4" /> Start Ride
+            </Button>
+          )}
+          {isActiveOnThisRoute && (
+            <>
+              <Button onClick={handleCompleteRide} loading={rideLoading} size="sm">
+                <HiStop className="h-4 w-4" /> Complete Ride
+              </Button>
+              <Button variant="outline" onClick={handleCancelRide} loading={rideLoading} size="sm">
+                <HiXMark className="h-4 w-4" /> Cancel
+              </Button>
+            </>
+          )}
+          {hasActiveRideElsewhere && (
+            <Button disabled size="sm" title="You have an active ride on another route">
+              <HiPlay className="h-4 w-4" /> Start Ride
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* Map */}
       <RouteMap route={route} className="mt-6" />

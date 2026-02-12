@@ -16,7 +16,9 @@ const RouteDetail = lazy(() => import('./pages/RouteDetail'));
 const CreateRoute = lazy(() => import('./pages/CreateRoute'));
 const EditRoute = lazy(() => import('./pages/EditRoute'));
 const ReportsList = lazy(() => import('./pages/ReportsList'));
+const ReportDetail = lazy(() => import('./pages/ReportDetail'));
 const CreateReport = lazy(() => import('./pages/CreateReport'));
+const EditReport = lazy(() => import('./pages/EditReport'));
 const Rewards = lazy(() => import('./pages/Rewards'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Profile = lazy(() => import('./pages/Profile'));
@@ -47,12 +49,14 @@ function App() {
                 <Route path="/routes" element={<RoutesList />} />
                 <Route path="/routes/:id" element={<RouteDetail />} />
                 <Route path="/reports" element={<ReportsList />} />
+                <Route path="/reports/:id" element={<ReportDetail />} />
                 <Route path="/rewards" element={<Rewards />} />
 
                 {/* Protected (cyclist + admin) */}
                 <Route path="/routes/create" element={<ProtectedRoute><CreateRoute /></ProtectedRoute>} />
                 <Route path="/routes/:id/edit" element={<ProtectedRoute><EditRoute /></ProtectedRoute>} />
                 <Route path="/reports/create" element={<ProtectedRoute><CreateReport /></ProtectedRoute>} />
+                <Route path="/reports/:id/edit" element={<ProtectedRoute><EditReport /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/profile/:id" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

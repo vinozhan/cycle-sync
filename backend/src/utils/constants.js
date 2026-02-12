@@ -22,13 +22,18 @@ export const REPORT_SEVERITY = ['low', 'medium', 'high', 'critical'];
 
 export const REPORT_STATUS = ['open', 'under_review', 'resolved', 'dismissed'];
 
-export const REWARD_CATEGORIES = ['distance', 'routes', 'reports', 'reviews', 'streak', 'special'];
+export const RIDE_STATUS = ['active', 'completed', 'cancelled'];
+
+export const CO2_PER_KM = 0.21;
+
+export const REWARD_CATEGORIES = ['distance', 'routes', 'reports', 'reviews', 'rides', 'streak', 'special'];
 
 export const REWARD_TIERS = ['bronze', 'silver', 'gold', 'platinum'];
 
 export const POINTS = {
   REPORT_SUBMITTED: 5,
   REVIEW_WRITTEN: 10,
+  RIDE_COMPLETED: 10,
   ROUTE_CREATED: 15,
 };
 

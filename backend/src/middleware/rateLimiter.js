@@ -6,8 +6,10 @@ const skipInTest = isTest ? (req, res) => true : undefined;
 
 export const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
-  skip: skipInTest,
+  max: 200,
+  skip: isTest
+    ? (req, res) => true
+    : (req) => req.path.startsWith('/api/auth'),
   message: {
     success: false,
     message: 'Too many requests. Please try again later.',

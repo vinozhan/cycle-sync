@@ -81,9 +81,10 @@ const ReportsList = () => {
         <>
           <div className="mt-6 space-y-3">
             {reports.map((report) => (
-              <div
+              <Link
                 key={report._id}
-                className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
+                to={`/reports/${report._id}`}
+                className="block rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3">
@@ -100,9 +101,7 @@ const ReportsList = () => {
 
                       {report.route && (
                         <p className="mt-1 text-xs text-gray-400">
-                          Route: <Link to={`/routes/${report.route._id || report.route}`} className="text-emerald-600 hover:underline" onClick={(e) => e.stopPropagation()}>
-                            {report.route.title || 'View Route'}
-                          </Link>
+                          Route: {report.route.title || 'View Route'}
                         </p>
                       )}
 
@@ -121,7 +120,7 @@ const ReportsList = () => {
                   </div>
                   <span className="text-xs text-gray-400">{formatDate(report.createdAt)}</span>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
 
