@@ -1,6 +1,9 @@
 import Route from '../models/Route.js';
+import User from '../models/User.js';
 import ApiError from '../utils/ApiError.js';
 import { buildPagination, paginateResult } from '../utils/pagination.js';
+import { POINTS } from '../utils/constants.js';
+import { checkAndGrantRewards } from './rewardService.js';
 import openRouteServiceClient from './openRouteService.js';
 
 export const create = async (routeData, userId) => {
@@ -24,6 +27,20 @@ export const create = async (routeData, userId) => {
   }
 
   const route = await Route.create(routeData);
+
+  await User.findByIdAndUpdate(userId, {
+    $inc: {
+      totalPoints: POINTS.ROUTE_CREATED,
+      totalDistance: route.distance || 0,
+    },
+  });
+
+  try {
+    await checkAndGrantRewards(userId);
+  } catch {
+    // Reward check failure should not block route creation
+  }
+
   return route.populate('createdBy', 'firstName lastName avatar');
 };
 

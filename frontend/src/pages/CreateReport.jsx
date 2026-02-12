@@ -18,7 +18,7 @@ const CreateReport = () => {
     description: '',
     category: 'pothole',
     severity: 'medium',
-    location: ['', ''],
+    location: { lat: '', lng: '' },
   });
 
   const handleChange = (e) => {
@@ -28,7 +28,7 @@ const CreateReport = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (formData.location[0] === '' || formData.location[1] === '') {
+    if (!formData.location.lat || !formData.location.lng) {
       toast.error('Please select a location on the map');
       return;
     }
@@ -41,8 +41,8 @@ const CreateReport = () => {
         category: formData.category,
         severity: formData.severity,
         location: {
-          type: 'Point',
-          coordinates: formData.location.map(Number),
+          lat: Number(formData.location.lat),
+          lng: Number(formData.location.lng),
         },
       };
       await createReport(payload);

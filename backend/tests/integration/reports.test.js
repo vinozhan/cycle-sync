@@ -81,6 +81,61 @@ describe('POST /api/reports', () => {
 
     expect(res.status).toBe(400);
   });
+
+  it('should not allow reporting hazards on own route', async () => {
+    const { token } = await registerAndLogin(cyclist);
+    const routeRes = await request(app)
+      .post('/api/routes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        title: 'Test Route',
+        description: 'A test route',
+        startPoint: { lat: 51.505, lng: -0.09 },
+        endPoint: { lat: 51.51, lng: -0.08 },
+        distance: 5,
+        difficulty: 'easy',
+      });
+    const routeId = routeRes.body.data.route._id;
+
+    const res = await request(app)
+      .post('/api/reports')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ ...validReport, route: routeId });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toContain('cannot report hazards on your own route');
+  });
+
+  it('should allow reporting hazards on another user route', async () => {
+    const { token } = await registerAndLogin(cyclist);
+    const cyclist2 = {
+      firstName: 'Bob',
+      lastName: 'Smith',
+      email: 'bob@example.com',
+      password: 'SecurePass1',
+    };
+    const { token: token2 } = await registerAndLogin(cyclist2);
+
+    const routeRes = await request(app)
+      .post('/api/routes')
+      .set('Authorization', `Bearer ${token2}`)
+      .send({
+        title: 'Test Route',
+        description: 'A test route',
+        startPoint: { lat: 51.505, lng: -0.09 },
+        endPoint: { lat: 51.51, lng: -0.08 },
+        distance: 5,
+        difficulty: 'easy',
+      });
+    const routeId = routeRes.body.data.route._id;
+
+    const res = await request(app)
+      .post('/api/reports')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ ...validReport, route: routeId });
+
+    expect(res.status).toBe(201);
+  });
 });
 
 describe('GET /api/reports', () => {

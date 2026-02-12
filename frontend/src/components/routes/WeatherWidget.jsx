@@ -20,7 +20,7 @@ const WeatherWidget = ({ routeId }) => {
     const fetchWeather = async () => {
       try {
         const { data } = await api.get(`/routes/${routeId}/weather`);
-        setWeather(data.data);
+        setWeather(data.data.weather);
       } catch {
         setError('Weather data unavailable');
       } finally {

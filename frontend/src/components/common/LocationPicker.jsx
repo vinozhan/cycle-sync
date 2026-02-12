@@ -8,7 +8,7 @@ import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '../../utils/constants';
 const MapClickHandler = ({ onLocationSelect }) => {
   useMapEvents({
     click(e) {
-      onLocationSelect([e.latlng.lat, e.latlng.lng]);
+      onLocationSelect({ lat: e.latlng.lat, lng: e.latlng.lng });
     },
   });
   return null;
@@ -33,14 +33,13 @@ const LocationPicker = ({ label, value, onChange, className = '' }) => {
   const [locating, setLocating] = useState(false);
   const debounceRef = useRef(null);
 
-  // value is [lng, lat] (GeoJSON), convert to [lat, lng] for Leaflet
-  const markerPosition = value && value[0] !== '' && value[1] !== ''
-    ? [Number(value[1]), Number(value[0])]
+  // value is { lat, lng } object, convert to [lat, lng] for Leaflet
+  const markerPosition = value && value.lat && value.lng
+    ? [Number(value.lat), Number(value.lng)]
     : null;
 
   const handleMapClick = (latLng) => {
-    // Convert [lat, lng] back to [lng, lat] for GeoJSON
-    onChange([latLng[1], latLng[0]]);
+    onChange(latLng);
     setSuggestions([]);
   };
 
@@ -77,7 +76,7 @@ const LocationPicker = ({ label, value, onChange, className = '' }) => {
   const selectSuggestion = (item) => {
     const lat = parseFloat(item.lat);
     const lng = parseFloat(item.lon);
-    onChange([lng, lat]); // GeoJSON [lng, lat]
+    onChange({ lat, lng });
     setFlyTarget([lat, lng]);
     setSearchQuery(item.display_name.split(',').slice(0, 2).join(','));
     setSuggestions([]);
@@ -89,7 +88,7 @@ const LocationPicker = ({ label, value, onChange, className = '' }) => {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
-        onChange([longitude, latitude]); // GeoJSON [lng, lat]
+        onChange({ lat: latitude, lng: longitude });
         setFlyTarget([latitude, longitude]);
         setSuggestions([]);
         setLocating(false);

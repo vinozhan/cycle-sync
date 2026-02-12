@@ -42,6 +42,13 @@ const cyclist2 = {
   password: 'SecurePass1',
 };
 
+const cyclist3 = {
+  firstName: 'Alice',
+  lastName: 'Johnson',
+  email: 'alice@example.com',
+  password: 'SecurePass1',
+};
+
 const createRoute = async (token) => {
   const res = await request(app)
     .post('/api/routes')
@@ -60,7 +67,8 @@ const createRoute = async (token) => {
 describe('POST /api/reviews', () => {
   it('should create a review for authenticated user', async () => {
     const { token } = await registerAndLogin(cyclist);
-    const routeId = await createRoute(token);
+    const { token: token2 } = await registerAndLogin(cyclist2);
+    const routeId = await createRoute(token2);
 
     const res = await request(app)
       .post('/api/reviews')
@@ -77,6 +85,24 @@ describe('POST /api/reviews', () => {
     expect(res.status).toBe(201);
     expect(res.body.data.review.rating).toBe(4);
     expect(res.body.data.review.title).toBe('Great route!');
+  });
+
+  it('should not allow reviewing own route', async () => {
+    const { token } = await registerAndLogin(cyclist);
+    const routeId = await createRoute(token);
+
+    const res = await request(app)
+      .post('/api/reviews')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        route: routeId,
+        rating: 5,
+        title: 'Self review',
+        comment: 'Reviewing my own route',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toContain('cannot review your own route');
   });
 
   it('should return 401 when not authenticated', async () => {
@@ -99,7 +125,8 @@ describe('POST /api/reviews', () => {
 
   it('should return 400 for invalid rating', async () => {
     const { token } = await registerAndLogin(cyclist);
-    const routeId = await createRoute(token);
+    const { token: token2 } = await registerAndLogin(cyclist2);
+    const routeId = await createRoute(token2);
 
     const res = await request(app)
       .post('/api/reviews')
@@ -111,7 +138,8 @@ describe('POST /api/reviews', () => {
 
   it('should not allow duplicate review on same route', async () => {
     const { token } = await registerAndLogin(cyclist);
-    const routeId = await createRoute(token);
+    const { token: token2 } = await registerAndLogin(cyclist2);
+    const routeId = await createRoute(token2);
 
     const review = {
       route: routeId,
@@ -136,7 +164,8 @@ describe('POST /api/reviews', () => {
   it('should update route average rating after review', async () => {
     const { token } = await registerAndLogin(cyclist);
     const { token: token2 } = await registerAndLogin(cyclist2);
-    const routeId = await createRoute(token);
+    const { token: token3 } = await registerAndLogin(cyclist3);
+    const routeId = await createRoute(token3);
 
     await request(app)
       .post('/api/reviews')
@@ -157,7 +186,8 @@ describe('POST /api/reviews', () => {
 describe('GET /api/reviews', () => {
   it('should list reviews (public)', async () => {
     const { token } = await registerAndLogin(cyclist);
-    const routeId = await createRoute(token);
+    const { token: token2 } = await registerAndLogin(cyclist2);
+    const routeId = await createRoute(token2);
     await request(app)
       .post('/api/reviews')
       .set('Authorization', `Bearer ${token}`)
@@ -172,7 +202,8 @@ describe('GET /api/reviews', () => {
 
   it('should filter by route', async () => {
     const { token } = await registerAndLogin(cyclist);
-    const routeId = await createRoute(token);
+    const { token: token2 } = await registerAndLogin(cyclist2);
+    const routeId = await createRoute(token2);
     await request(app)
       .post('/api/reviews')
       .set('Authorization', `Bearer ${token}`)
@@ -187,7 +218,8 @@ describe('GET /api/reviews', () => {
 describe('GET /api/reviews/:id', () => {
   it('should return review by ID', async () => {
     const { token } = await registerAndLogin(cyclist);
-    const routeId = await createRoute(token);
+    const { token: token2 } = await registerAndLogin(cyclist2);
+    const routeId = await createRoute(token2);
     const createRes = await request(app)
       .post('/api/reviews')
       .set('Authorization', `Bearer ${token}`)
@@ -203,7 +235,8 @@ describe('GET /api/reviews/:id', () => {
 describe('PUT /api/reviews/:id', () => {
   it('should update own review', async () => {
     const { token } = await registerAndLogin(cyclist);
-    const routeId = await createRoute(token);
+    const { token: token2 } = await registerAndLogin(cyclist2);
+    const routeId = await createRoute(token2);
     const createRes = await request(app)
       .post('/api/reviews')
       .set('Authorization', `Bearer ${token}`)
@@ -223,7 +256,7 @@ describe('PUT /api/reviews/:id', () => {
   it('should not allow other user to update review', async () => {
     const { token } = await registerAndLogin(cyclist);
     const { token: token2 } = await registerAndLogin(cyclist2);
-    const routeId = await createRoute(token);
+    const routeId = await createRoute(token2);
     const createRes = await request(app)
       .post('/api/reviews')
       .set('Authorization', `Bearer ${token}`)
@@ -242,7 +275,8 @@ describe('PUT /api/reviews/:id', () => {
 describe('DELETE /api/reviews/:id', () => {
   it('should delete own review', async () => {
     const { token } = await registerAndLogin(cyclist);
-    const routeId = await createRoute(token);
+    const { token: token2 } = await registerAndLogin(cyclist2);
+    const routeId = await createRoute(token2);
     const createRes = await request(app)
       .post('/api/reviews')
       .set('Authorization', `Bearer ${token}`)

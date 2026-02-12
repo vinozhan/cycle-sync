@@ -29,6 +29,7 @@ export const REWARD_TIERS = ['bronze', 'silver', 'gold', 'platinum'];
 export const POINTS = {
   REPORT_SUBMITTED: 5,
   REVIEW_WRITTEN: 10,
+  ROUTE_CREATED: 15,
 };
 
 export const JWT = {

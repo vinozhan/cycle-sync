@@ -1,17 +1,32 @@
 import Report from '../models/Report.js';
+import Route from '../models/Route.js';
 import User from '../models/User.js';
 import ApiError from '../utils/ApiError.js';
 import { buildPagination, paginateResult } from '../utils/pagination.js';
 import { POINTS } from '../utils/constants.js';
+import { checkAndGrantRewards } from './rewardService.js';
 
 export const create = async (reportData, userId) => {
   reportData.reportedBy = userId;
+
+  if (reportData.route) {
+    const route = await Route.findById(reportData.route);
+    if (route && route.createdBy.toString() === userId) {
+      throw ApiError.badRequest('You cannot report hazards on your own route');
+    }
+  }
 
   const report = await Report.create(reportData);
 
   await User.findByIdAndUpdate(userId, {
     $inc: { totalPoints: POINTS.REPORT_SUBMITTED },
   });
+
+  try {
+    await checkAndGrantRewards(userId);
+  } catch {
+    // Reward check failure should not block report creation
+  }
 
   return report.populate([
     { path: 'reportedBy', select: 'firstName lastName avatar' },

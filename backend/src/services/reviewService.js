@@ -4,6 +4,7 @@ import User from '../models/User.js';
 import ApiError from '../utils/ApiError.js';
 import { buildPagination, paginateResult } from '../utils/pagination.js';
 import { POINTS } from '../utils/constants.js';
+import { checkAndGrantRewards } from './rewardService.js';
 
 export const recalculateRouteRating = async (routeId) => {
   const result = await Review.aggregate([
@@ -38,6 +39,10 @@ export const create = async (reviewData, userId) => {
     throw ApiError.notFound('Route not found');
   }
 
+  if (route.createdBy.toString() === userId) {
+    throw ApiError.badRequest('You cannot review your own route');
+  }
+
   const existing = await Review.findOne({
     route: reviewData.route,
     reviewer: userId,
@@ -53,6 +58,12 @@ export const create = async (reviewData, userId) => {
   await User.findByIdAndUpdate(userId, {
     $inc: { totalPoints: POINTS.REVIEW_WRITTEN },
   });
+
+  try {
+    await checkAndGrantRewards(userId);
+  } catch {
+    // Reward check failure should not block review creation
+  }
 
   return review.populate([
     { path: 'reviewer', select: 'firstName lastName avatar' },
