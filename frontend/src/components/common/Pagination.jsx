@@ -3,7 +3,9 @@ import { HiChevronLeft, HiChevronRight } from 'react-icons/hi2';
 const Pagination = ({ pagination, onPageChange }) => {
   if (!pagination || pagination.totalPages <= 1) return null;
 
-  const { page, totalPages, hasNext, hasPrev } = pagination;
+  const { page, totalPages, hasNext, hasPrev, hasNextPage, hasPrevPage } = pagination;
+  const canGoNext = hasNext ?? hasNextPage;
+  const canGoPrev = hasPrev ?? hasPrevPage;
 
   const getPageNumbers = () => {
     const pages = [];
@@ -20,7 +22,7 @@ const Pagination = ({ pagination, onPageChange }) => {
     <nav className="flex items-center justify-center gap-1 mt-6">
       <button
         onClick={() => onPageChange(page - 1)}
-        disabled={!hasPrev}
+        disabled={!canGoPrev}
         className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
       >
         <HiChevronLeft className="h-5 w-5" />
@@ -42,7 +44,7 @@ const Pagination = ({ pagination, onPageChange }) => {
 
       <button
         onClick={() => onPageChange(page + 1)}
-        disabled={!hasNext}
+        disabled={!canGoNext}
         className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
       >
         <HiChevronRight className="h-5 w-5" />

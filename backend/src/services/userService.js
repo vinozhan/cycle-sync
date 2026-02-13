@@ -53,6 +53,9 @@ export const updateUser = async (id, updateData, requestingUserId, requestingRol
   delete updateData.totalDistance;
   delete updateData.totalPoints;
   delete updateData.achievements;
+  delete updateData.currentStreak;
+  delete updateData.longestStreak;
+  delete updateData.lastRideDate;
 
   const user = await User.findByIdAndUpdate(id, updateData, {
     new: true,
@@ -134,6 +137,17 @@ export const getUserStats = async (id) => {
 
   const rideStat = rideAgg[0] || { count: 0, co2: 0 };
 
+  // Compute live display streak: reset to 0 if last ride was more than 1 day ago
+  let displayStreak = user.currentStreak || 0;
+  if (user.lastRideDate) {
+    const now = new Date();
+    const todayUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    const last = new Date(user.lastRideDate);
+    const lastUTC = Date.UTC(last.getUTCFullYear(), last.getUTCMonth(), last.getUTCDate());
+    const diffDays = Math.round((todayUTC - lastUTC) / (1000 * 60 * 60 * 24));
+    if (diffDays > 1) displayStreak = 0;
+  }
+
   return {
     totalDistance: user.totalDistance,
     totalPoints: user.totalPoints,
@@ -144,5 +158,7 @@ export const getUserStats = async (id) => {
     co2Saved: rideStat.co2,
     achievementCount: user.achievements.length,
     memberSince: user.createdAt,
+    currentStreak: displayStreak,
+    longestStreak: user.longestStreak || 0,
   };
 };

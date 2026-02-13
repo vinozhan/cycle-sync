@@ -54,6 +54,18 @@ const userSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    currentStreak: {
+      type: Number,
+      default: 0,
+    },
+    longestStreak: {
+      type: Number,
+      default: 0,
+    },
+    lastRideDate: {
+      type: Date,
+      default: null,
+    },
     preferredDifficulty: {
       type: String,
       enum: ['beginner', 'intermediate', 'advanced'],

@@ -5,6 +5,7 @@ import User from '../models/User.js';
 import ApiError from '../utils/ApiError.js';
 import { buildPagination, paginateResult } from '../utils/pagination.js';
 import { POINTS, CO2_PER_KM } from '../utils/constants.js';
+import { calculateStreak } from '../utils/streak.js';
 import { checkAndGrantRewards } from './rewardService.js';
 
 export const startRide = async (routeId, userId) => {
@@ -77,10 +78,18 @@ export const completeRide = async (rideId, userId) => {
   ride.pointsEarned = POINTS.RIDE_COMPLETED;
   await ride.save();
 
+  const userDoc = await User.findById(userId);
+  const streak = calculateStreak(userDoc.lastRideDate, userDoc.currentStreak, userDoc.longestStreak);
+
   await User.findByIdAndUpdate(userId, {
     $inc: {
       totalPoints: POINTS.RIDE_COMPLETED,
       totalDistance: distance,
+    },
+    $set: {
+      currentStreak: streak.currentStreak,
+      longestStreak: streak.longestStreak,
+      lastRideDate: streak.lastRideDate,
     },
   });
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { HiTrophy, HiMapPin, HiShieldCheck, HiStar, HiChartBar, HiPencil } from 'react-icons/hi2';
+import { useParams, Link } from 'react-router-dom';
+import { HiTrophy, HiMapPin, HiShieldCheck, HiStar, HiChartBar, HiPencil, HiFire, HiBolt } from 'react-icons/hi2';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 import useAuth from '../hooks/useAuth';
@@ -9,21 +9,23 @@ import Pagination from '../components/common/Pagination';
 import Modal from '../components/common/Modal';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
-import { formatDate, formatDistance, formatRating, getInitials } from '../utils/formatters';
+import PointsBreakdownModal from '../components/common/PointsBreakdownModal';
+import { formatDate, formatDateTime, formatDistance, formatDuration, formatRating, getInitials } from '../utils/formatters';
 import { getErrorMessage } from '../utils/validators';
 import { REWARD_TIERS } from '../utils/constants';
-
-const tabs = [
-  { key: 'routes', label: 'Routes', icon: HiMapPin },
-  { key: 'reports', label: 'Reports', icon: HiShieldCheck },
-  { key: 'reviews', label: 'Reviews', icon: HiStar },
-];
 
 const Profile = () => {
   const { id } = useParams();
   const { user: currentUser, setUser } = useAuth();
   const userId = id || currentUser?._id;
   const isOwnProfile = !id || id === currentUser?._id;
+
+  const tabs = [
+    { key: 'routes', label: 'Routes', icon: HiMapPin },
+    { key: 'reports', label: 'Reports', icon: HiShieldCheck },
+    { key: 'reviews', label: 'Reviews', icon: HiStar },
+    ...(isOwnProfile ? [{ key: 'rides', label: 'Rides', icon: HiBolt }] : []),
+  ];
 
   const [profile, setProfile] = useState(null);
   const [stats, setStats] = useState(null);
@@ -33,6 +35,8 @@ const Profile = () => {
   const [pagination, setPagination] = useState(null);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+
+  const [pointsModalOpen, setPointsModalOpen] = useState(false);
 
   // Edit modal state
   const [editOpen, setEditOpen] = useState(false);
@@ -70,6 +74,8 @@ const Profile = () => {
           res = await api.get('/routes', { params: { createdBy: userId, page } });
         } else if (activeTab === 'reports') {
           res = await api.get('/reports', { params: { reportedBy: userId, page } });
+        } else if (activeTab === 'rides') {
+          res = await api.get('/rides', { params: { page } });
         } else {
           res = await api.get('/reviews', { params: { reviewer: userId, page } });
         }
@@ -150,8 +156,11 @@ const Profile = () => {
       </div>
 
       {/* Stats */}
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-lg border border-gray-200 bg-white p-4 text-center">
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <div
+          onClick={() => setPointsModalOpen(true)}
+          className="cursor-pointer rounded-lg border border-gray-200 bg-white p-4 text-center transition-colors hover:border-emerald-300"
+        >
           <HiChartBar className="mx-auto h-6 w-6 text-emerald-600" />
           <p className="mt-1 text-xl font-bold text-gray-900">{profile.totalPoints || 0}</p>
           <p className="text-xs text-gray-500">Points</p>
@@ -170,6 +179,11 @@ const Profile = () => {
           <HiStar className="mx-auto h-6 w-6 text-purple-600" />
           <p className="mt-1 text-xl font-bold text-gray-900">{stats?.reviewsWritten || 0}</p>
           <p className="text-xs text-gray-500">Reviews</p>
+        </div>
+        <div className="rounded-lg border border-gray-200 bg-white p-4 text-center">
+          <HiFire className="mx-auto h-6 w-6 text-orange-600" />
+          <p className="mt-1 text-xl font-bold text-gray-900">{stats?.currentStreak || 0}</p>
+          <p className="text-xs text-gray-500">Day Streak</p>
         </div>
       </div>
 
@@ -213,6 +227,43 @@ const Profile = () => {
       <div className="mt-4 space-y-3">
         {content.length === 0 ? (
           <p className="py-8 text-center text-sm text-gray-500">No {activeTab} yet.</p>
+        ) : activeTab === 'rides' ? (
+          content.map((ride) => {
+            const statusColors = {
+              completed: 'bg-green-100 text-green-800',
+              cancelled: 'bg-red-100 text-red-800',
+              active: 'bg-yellow-100 text-yellow-800',
+            };
+            return (
+              <div key={ride._id} className="rounded-lg border border-gray-200 bg-white p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {ride.route ? (
+                      <Link to={`/routes/${ride.route._id}`} className="font-medium text-emerald-600 hover:underline">
+                        {ride.route.title}
+                      </Link>
+                    ) : (
+                      <span className="font-medium text-gray-900">Unknown Route</span>
+                    )}
+                  </div>
+                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${statusColors[ride.status] || 'bg-gray-100 text-gray-800'}`}>
+                    {ride.status}
+                  </span>
+                </div>
+                <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-500 sm:grid-cols-4">
+                  <span>{formatDateTime(ride.startedAt || ride.createdAt)}</span>
+                  {ride.distance != null && <span>{formatDistance(ride.distance)}</span>}
+                  {ride.duration != null && <span>{formatDuration(ride.duration)}</span>}
+                  {ride.co2Saved != null && <span>{ride.co2Saved.toFixed(2)} kg CO2</span>}
+                </div>
+                {ride.pointsEarned > 0 && (
+                  <span className="mt-2 inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                    +{ride.pointsEarned} pts
+                  </span>
+                )}
+              </div>
+            );
+          })
         ) : (
           content.map((item) => (
             <div
@@ -275,6 +326,13 @@ const Profile = () => {
           </div>
         </div>
       </Modal>
+
+      <PointsBreakdownModal
+        isOpen={pointsModalOpen}
+        onClose={() => setPointsModalOpen(false)}
+        stats={stats}
+        achievements={achievements}
+      />
     </div>
   );
 };

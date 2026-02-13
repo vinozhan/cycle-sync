@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { HiTrophy, HiMapPin, HiShieldCheck, HiStar, HiChartBar, HiPlus, HiBolt, HiGlobeAlt } from 'react-icons/hi2';
+import { HiTrophy, HiMapPin, HiShieldCheck, HiStar, HiChartBar, HiPlus, HiBolt, HiGlobeAlt, HiFire } from 'react-icons/hi2';
 import toast from 'react-hot-toast';
 import useAuth from '../hooks/useAuth';
 import api from '../services/api';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import Button from '../components/common/Button';
+import PointsBreakdownModal from '../components/common/PointsBreakdownModal';
 import { formatDistance } from '../utils/formatters';
 import { REWARD_TIERS } from '../utils/constants';
 
@@ -14,6 +15,7 @@ const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [achievements, setAchievements] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [pointsModalOpen, setPointsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,9 +36,10 @@ const Dashboard = () => {
   }, [user]);
 
   const statCards = [
-    { label: 'Total Points', value: stats?.totalPoints || 0, icon: HiChartBar, color: 'text-emerald-600 bg-emerald-50' },
+    { label: 'Total Points', value: stats?.totalPoints || 0, icon: HiChartBar, color: 'text-emerald-600 bg-emerald-50', onClick: () => setPointsModalOpen(true) },
     { label: 'Rides Completed', value: stats?.ridesCompleted || 0, icon: HiBolt, color: 'text-cyan-600 bg-cyan-50' },
     { label: 'CO2 Saved', value: `${(stats?.co2Saved || 0).toFixed(1)} kg`, icon: HiGlobeAlt, color: 'text-green-600 bg-green-50' },
+    // { label: 'Ride Streak', value: `${stats?.currentStreak || 0} days`, icon: HiFire, color: 'text-orange-600 bg-orange-50' },
     { label: 'Routes Created', value: stats?.routesCreated || 0, icon: HiMapPin, color: 'text-blue-600 bg-blue-50' },
     { label: 'Reports Filed', value: stats?.reportsSubmitted || 0, icon: HiShieldCheck, color: 'text-amber-600 bg-amber-50' },
     { label: 'Reviews Written', value: stats?.reviewsWritten || 0, icon: HiStar, color: 'text-purple-600 bg-purple-50' },
@@ -83,7 +86,8 @@ const Dashboard = () => {
         {statCards.map((stat) => (
           <div
             key={stat.label}
-            className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
+            onClick={stat.onClick}
+            className={`flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm${stat.onClick ? ' cursor-pointer hover:border-emerald-300 transition-colors' : ''}`}
           >
             <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${stat.color}`}>
               <stat.icon className="h-6 w-6" />
@@ -158,6 +162,13 @@ const Dashboard = () => {
           </div>
         )}
       </div>
+
+      <PointsBreakdownModal
+        isOpen={pointsModalOpen}
+        onClose={() => setPointsModalOpen(false)}
+        stats={stats}
+        achievements={achievements}
+      />
     </div>
   );
 };

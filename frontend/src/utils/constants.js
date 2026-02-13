@@ -49,6 +49,13 @@ export const REWARD_TIERS = [
   { value: 'platinum', label: 'Platinum', color: 'text-indigo-500' },
 ];
 
+export const POINTS = {
+  REPORT_SUBMITTED: 5,
+  REVIEW_WRITTEN: 10,
+  RIDE_COMPLETED: 10,
+  ROUTE_CREATED: 15,
+};
+
 // Sri Lanka center (approx. Kandy area)
 export const DEFAULT_MAP_CENTER = [7.8731, 80.7718];
 export const DEFAULT_MAP_ZOOM = 8;
