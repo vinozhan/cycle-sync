@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: cyclesync-api
+    runtime: node
+    plan: free
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: ORS_API_KEY
+        sync: false
+      - key: OWM_API_KEY
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false

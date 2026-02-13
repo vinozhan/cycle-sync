@@ -2,14 +2,16 @@
   "name": "cyclesync-backend",
   "version": "1.0.0",
   "description": "CycleSync - RESTful API for promoting cycling with safe routes and rewards",
+  "type": "module",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "jest --runInBand",
-    "test:unit": "jest --testPathPattern=tests/unit",
-    "test:integration": "jest --testPathPattern=tests/integration --runInBand",
-    "test:coverage": "jest --coverage --runInBand",
+    "seed": "node src/seed.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit",
+    "test:unit": "node --experimental-vm-modules node_modules/jest/bin/jest.js --testPathPatterns=tests/unit",
+    "test:integration": "node --experimental-vm-modules node_modules/jest/bin/jest.js --testPathPatterns=tests/integration --runInBand --forceExit",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --runInBand --forceExit",
     "test:perf": "artillery run tests/performance/load-test.yml --output tests/performance/report.json",
     "test:perf:report": "artillery report tests/performance/report.json",
     "test:stress": "artillery run tests/performance/stress-test.yml"
@@ -21,6 +23,9 @@
     "express",
     "mongodb"
   ],
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {
