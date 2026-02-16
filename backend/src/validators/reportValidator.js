@@ -1,5 +1,5 @@
 import { body, param, query } from 'express-validator';
-import { REPORT_CATEGORIES, REPORT_SEVERITY, REPORT_STATUS } from '../utils/constants.js';
+import { REPORT_CATEGORIES, REPORT_SEVERITY, REPORT_STATUS, CONFIRMATION_TYPES } from '../utils/constants.js';
 
 export const createReportValidator = [
   body('title')
@@ -111,6 +111,14 @@ export const mongoIdParam = [
   param('id')
     .isMongoId()
     .withMessage('Invalid report ID'),
+];
+
+export const confirmReportValidator = [
+  body('status')
+    .notEmpty()
+    .withMessage('Confirmation status is required')
+    .isIn(CONFIRMATION_TYPES)
+    .withMessage(`Status must be one of: ${CONFIRMATION_TYPES.join(', ')}`),
 ];
 
 export const listReportsQuery = [

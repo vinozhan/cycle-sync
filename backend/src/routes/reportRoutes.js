@@ -4,6 +4,7 @@ import {
   createReportValidator,
   updateReportValidator,
   updateStatusValidator,
+  confirmReportValidator,
   mongoIdParam,
   listReportsQuery,
 } from '../validators/reportValidator.js';
@@ -182,6 +183,51 @@ router.put(
  *         description: Not authorized
  */
 router.delete('/:id', auth, mongoIdParam, validate, reportController.remove);
+
+/**
+ * @swagger
+ * /reports/{id}/confirm:
+ *   post:
+ *     summary: Confirm a hazard report (non-owner, authenticated)
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [still_exists, resolved]
+ *     responses:
+ *       200:
+ *         description: Confirmation recorded
+ *       400:
+ *         description: Invalid status or report already resolved/dismissed
+ *       403:
+ *         description: Cannot confirm own report
+ *       404:
+ *         description: Report not found
+ */
+router.post(
+  '/:id/confirm',
+  auth,
+  mongoIdParam,
+  confirmReportValidator,
+  validate,
+  reportController.confirm
+);
 
 /**
  * @swagger

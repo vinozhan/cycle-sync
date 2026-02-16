@@ -51,10 +51,13 @@ export const REWARD_TIERS = [
 
 export const POINTS = {
   REPORT_SUBMITTED: 5,
+  REPORT_CONFIRMED: 2,
   REVIEW_WRITTEN: 10,
   RIDE_COMPLETED: 10,
   ROUTE_CREATED: 15,
 };
+
+export const AUTO_RESOLVE_THRESHOLD = 3;
 
 // Sri Lanka center (approx. Kandy area)
 export const DEFAULT_MAP_CENTER = [7.8731, 80.7718];

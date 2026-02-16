@@ -22,6 +22,10 @@ export const REPORT_SEVERITY = ['low', 'medium', 'high', 'critical'];
 
 export const REPORT_STATUS = ['open', 'under_review', 'resolved', 'dismissed'];
 
+export const CONFIRMATION_TYPES = ['still_exists', 'resolved'];
+
+export const AUTO_RESOLVE_THRESHOLD = 3;
+
 export const RIDE_STATUS = ['active', 'completed', 'cancelled'];
 
 export const CO2_PER_KM = 0.21;
@@ -32,6 +36,7 @@ export const REWARD_TIERS = ['bronze', 'silver', 'gold', 'platinum'];
 
 export const POINTS = {
   REPORT_SUBMITTED: 5,
+  REPORT_CONFIRMED: 2,
   REVIEW_WRITTEN: 10,
   RIDE_COMPLETED: 10,
   ROUTE_CREATED: 15,

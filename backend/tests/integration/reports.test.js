@@ -1,6 +1,7 @@
 import request from 'supertest';
 import app from '../../src/app.js';
 import User from '../../src/models/User.js';
+import Report from '../../src/models/Report.js';
 import { connectDB, disconnectDB, clearDB } from './setup.js';
 
 beforeAll(async () => {
@@ -286,5 +287,249 @@ describe('PATCH /api/reports/:id/status', () => {
       .send({ status: 'resolved' });
 
     expect(res.status).toBe(403);
+  });
+});
+
+describe('POST /api/reports/:id/confirm', () => {
+  const cyclist2 = {
+    firstName: 'Bob',
+    lastName: 'Smith',
+    email: 'bob@example.com',
+    password: 'SecurePass1',
+  };
+
+  const cyclist3 = {
+    firstName: 'Carol',
+    lastName: 'Jones',
+    email: 'carol@example.com',
+    password: 'SecurePass1',
+  };
+
+  const cyclist4 = {
+    firstName: 'Dave',
+    lastName: 'Brown',
+    email: 'dave@example.com',
+    password: 'SecurePass1',
+  };
+
+  it('should allow non-owner to confirm as still_exists', async () => {
+    const { token: ownerToken } = await registerAndLogin(cyclist);
+    const { token: otherToken } = await registerAndLogin(cyclist2);
+
+    const createRes = await request(app)
+      .post('/api/reports')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send(validReport);
+    const reportId = createRes.body.data.report._id;
+
+    const res = await request(app)
+      .post(`/api/reports/${reportId}/confirm`)
+      .set('Authorization', `Bearer ${otherToken}`)
+      .send({ status: 'still_exists' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.report.confirmations).toHaveLength(1);
+    expect(res.body.data.report.confirmations[0].status).toBe('still_exists');
+  });
+
+  it('should allow non-owner to confirm as resolved', async () => {
+    const { token: ownerToken } = await registerAndLogin(cyclist);
+    const { token: otherToken } = await registerAndLogin(cyclist2);
+
+    const createRes = await request(app)
+      .post('/api/reports')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send(validReport);
+    const reportId = createRes.body.data.report._id;
+
+    const res = await request(app)
+      .post(`/api/reports/${reportId}/confirm`)
+      .set('Authorization', `Bearer ${otherToken}`)
+      .send({ status: 'resolved' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.report.confirmations[0].status).toBe('resolved');
+  });
+
+  it('should return 403 when owner tries to confirm own report', async () => {
+    const { token: ownerToken } = await registerAndLogin(cyclist);
+
+    const createRes = await request(app)
+      .post('/api/reports')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send(validReport);
+    const reportId = createRes.body.data.report._id;
+
+    const res = await request(app)
+      .post(`/api/reports/${reportId}/confirm`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ status: 'resolved' });
+
+    expect(res.status).toBe(403);
+  });
+
+  it('should return 400 when confirming a resolved report', async () => {
+    const { token: ownerToken } = await registerAndLogin(cyclist);
+    const { token: adminToken } = await registerAndLogin(admin, 'admin');
+    const { token: otherToken } = await registerAndLogin(cyclist2);
+
+    const createRes = await request(app)
+      .post('/api/reports')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send(validReport);
+    const reportId = createRes.body.data.report._id;
+
+    await request(app)
+      .patch(`/api/reports/${reportId}/status`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ status: 'resolved' });
+
+    const res = await request(app)
+      .post(`/api/reports/${reportId}/confirm`)
+      .set('Authorization', `Bearer ${otherToken}`)
+      .send({ status: 'still_exists' });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('should return 400 when confirming a dismissed report', async () => {
+    const { token: ownerToken } = await registerAndLogin(cyclist);
+    const { token: adminToken } = await registerAndLogin(admin, 'admin');
+    const { token: otherToken } = await registerAndLogin(cyclist2);
+
+    const createRes = await request(app)
+      .post('/api/reports')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send(validReport);
+    const reportId = createRes.body.data.report._id;
+
+    await request(app)
+      .patch(`/api/reports/${reportId}/status`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ status: 'dismissed' });
+
+    const res = await request(app)
+      .post(`/api/reports/${reportId}/confirm`)
+      .set('Authorization', `Bearer ${otherToken}`)
+      .send({ status: 'resolved' });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('should allow user to change their confirmation without duplicate', async () => {
+    const { token: ownerToken } = await registerAndLogin(cyclist);
+    const { token: otherToken } = await registerAndLogin(cyclist2);
+
+    const createRes = await request(app)
+      .post('/api/reports')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send(validReport);
+    const reportId = createRes.body.data.report._id;
+
+    await request(app)
+      .post(`/api/reports/${reportId}/confirm`)
+      .set('Authorization', `Bearer ${otherToken}`)
+      .send({ status: 'still_exists' });
+
+    const res = await request(app)
+      .post(`/api/reports/${reportId}/confirm`)
+      .set('Authorization', `Bearer ${otherToken}`)
+      .send({ status: 'resolved' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.report.confirmations).toHaveLength(1);
+    expect(res.body.data.report.confirmations[0].status).toBe('resolved');
+  });
+
+  it('should auto-resolve after 3 resolved confirmations', async () => {
+    const { token: ownerToken } = await registerAndLogin(cyclist);
+    const { token: token2 } = await registerAndLogin(cyclist2);
+    const { token: token3 } = await registerAndLogin(cyclist3);
+    const { token: token4 } = await registerAndLogin(cyclist4);
+
+    const createRes = await request(app)
+      .post('/api/reports')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send(validReport);
+    const reportId = createRes.body.data.report._id;
+
+    await request(app)
+      .post(`/api/reports/${reportId}/confirm`)
+      .set('Authorization', `Bearer ${token2}`)
+      .send({ status: 'resolved' });
+
+    await request(app)
+      .post(`/api/reports/${reportId}/confirm`)
+      .set('Authorization', `Bearer ${token3}`)
+      .send({ status: 'resolved' });
+
+    const res = await request(app)
+      .post(`/api/reports/${reportId}/confirm`)
+      .set('Authorization', `Bearer ${token4}`)
+      .send({ status: 'resolved' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.report.status).toBe('resolved');
+    expect(res.body.data.report.adminNotes).toContain('Auto-resolved');
+  });
+
+  it('should not auto-resolve with only 2 resolved confirmations', async () => {
+    const { token: ownerToken } = await registerAndLogin(cyclist);
+    const { token: token2 } = await registerAndLogin(cyclist2);
+    const { token: token3 } = await registerAndLogin(cyclist3);
+
+    const createRes = await request(app)
+      .post('/api/reports')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send(validReport);
+    const reportId = createRes.body.data.report._id;
+
+    await request(app)
+      .post(`/api/reports/${reportId}/confirm`)
+      .set('Authorization', `Bearer ${token2}`)
+      .send({ status: 'resolved' });
+
+    const res = await request(app)
+      .post(`/api/reports/${reportId}/confirm`)
+      .set('Authorization', `Bearer ${token3}`)
+      .send({ status: 'resolved' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.report.status).toBe('open');
+  });
+
+  it('should return 401 when unauthenticated', async () => {
+    const { token: ownerToken } = await registerAndLogin(cyclist);
+
+    const createRes = await request(app)
+      .post('/api/reports')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send(validReport);
+    const reportId = createRes.body.data.report._id;
+
+    const res = await request(app)
+      .post(`/api/reports/${reportId}/confirm`)
+      .send({ status: 'resolved' });
+
+    expect(res.status).toBe(401);
+  });
+
+  it('should return 400 for invalid confirmation status', async () => {
+    const { token: ownerToken } = await registerAndLogin(cyclist);
+    const { token: otherToken } = await registerAndLogin(cyclist2);
+
+    const createRes = await request(app)
+      .post('/api/reports')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send(validReport);
+    const reportId = createRes.body.data.report._id;
+
+    const res = await request(app)
+      .post(`/api/reports/${reportId}/confirm`)
+      .set('Authorization', `Bearer ${otherToken}`)
+      .send({ status: 'invalid_status' });
+
+    expect(res.status).toBe(400);
   });
 });
