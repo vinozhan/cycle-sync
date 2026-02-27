@@ -24,7 +24,7 @@
     "mongodb"
   ],
   "engines": {
-    "node": ">=22.0.0"
+    "node": "22.14.0"
   },
   "author": "",
   "license": "ISC",
