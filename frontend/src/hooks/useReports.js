@@ -53,6 +53,11 @@ const useReports = () => {
     await api.delete(`/reports/${id}`);
   };
 
+  const confirmReport = async (id, status) => {
+    const { data } = await api.post(`/reports/${id}/confirm`, { status });
+    return data.data.report;
+  };
+
   const updateReportStatus = async (id, status, adminNotes) => {
     const { data } = await api.patch(`/reports/${id}/status`, {
       status,
@@ -72,6 +77,7 @@ const useReports = () => {
     createReport,
     updateReport,
     deleteReport,
+    confirmReport,
     updateReportStatus,
   };
 };

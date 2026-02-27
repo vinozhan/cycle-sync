@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { REPORT_CATEGORIES, REPORT_SEVERITY, REPORT_STATUS } from '../utils/constants.js';
+import { REPORT_CATEGORIES, REPORT_SEVERITY, REPORT_STATUS, CONFIRMATION_TYPES } from '../utils/constants.js';
 
 const reportSchema = new mongoose.Schema(
   {
@@ -66,6 +66,25 @@ const reportSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    confirmations: [
+      {
+        _id: false,
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+          required: true,
+        },
+        status: {
+          type: String,
+          enum: CONFIRMATION_TYPES,
+          required: true,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   { timestamps: true }
 );

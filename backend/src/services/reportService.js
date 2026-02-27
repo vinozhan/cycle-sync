@@ -3,7 +3,7 @@ import Route from '../models/Route.js';
 import User from '../models/User.js';
 import ApiError from '../utils/ApiError.js';
 import { buildPagination, paginateResult } from '../utils/pagination.js';
-import { POINTS } from '../utils/constants.js';
+import { POINTS, AUTO_RESOLVE_THRESHOLD } from '../utils/constants.js';
 import { checkAndGrantRewards } from './rewardService.js';
 
 export const create = async (reportData, userId) => {
@@ -74,7 +74,8 @@ export const list = async (queryParams) => {
 export const getById = async (id) => {
   const report = await Report.findById(id)
     .populate('reportedBy', 'firstName lastName avatar')
-    .populate('route', 'title');
+    .populate('route', 'title')
+    .populate('confirmations.user', 'firstName lastName');
 
   if (!report) {
     throw ApiError.notFound('Report not found');
@@ -120,6 +121,53 @@ export const remove = async (id, userId, userRole) => {
   }
 
   await Report.findByIdAndDelete(id);
+};
+
+export const confirm = async (reportId, userId, status) => {
+  const report = await Report.findById(reportId);
+  if (!report) {
+    throw ApiError.notFound('Report not found');
+  }
+
+  if (report.reportedBy.toString() === userId) {
+    throw ApiError.forbidden('You cannot confirm your own report');
+  }
+
+  if (report.status === 'resolved' || report.status === 'dismissed') {
+    throw ApiError.badRequest('Cannot confirm a report that is already resolved or dismissed');
+  }
+
+  const existing = report.confirmations.find(
+    (c) => c.user.toString() === userId
+  );
+
+  if (existing) {
+    existing.status = status;
+  } else {
+    report.confirmations.push({ user: userId, status });
+    await User.findByIdAndUpdate(userId, {
+      $inc: { totalPoints: POINTS.REPORT_CONFIRMED },
+    });
+  }
+
+  const resolvedCount = report.confirmations.filter(
+    (c) => c.status === 'resolved'
+  ).length;
+
+  if (resolvedCount >= AUTO_RESOLVE_THRESHOLD && report.status !== 'resolved') {
+    report.status = 'resolved';
+    report.adminNotes = report.adminNotes
+      ? `${report.adminNotes}\nAuto-resolved by community confirmations.`
+      : 'Auto-resolved by community confirmations.';
+  }
+
+  await report.save();
+
+  return report.populate([
+    { path: 'reportedBy', select: 'firstName lastName avatar' },
+    { path: 'route', select: 'title' },
+    { path: 'confirmations.user', select: 'firstName lastName' },
+  ]);
 };
 
 const VALID_TRANSITIONS = {

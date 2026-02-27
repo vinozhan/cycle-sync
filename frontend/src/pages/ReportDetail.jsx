@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { HiExclamationTriangle, HiMapPin, HiTrash, HiPencil } from 'react-icons/hi2';
+import { HiExclamationTriangle, HiMapPin, HiTrash, HiPencil, HiCheckCircle } from 'react-icons/hi2';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import toast from 'react-hot-toast';
 import useReports from '../hooks/useReports';
@@ -10,17 +10,18 @@ import Button from '../components/common/Button';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import { formatDate } from '../utils/formatters';
 import { getErrorMessage } from '../utils/validators';
-import { SEVERITY_OPTIONS, REPORT_STATUS_OPTIONS, REPORT_CATEGORIES, DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '../utils/constants';
+import { SEVERITY_OPTIONS, REPORT_STATUS_OPTIONS, REPORT_CATEGORIES, AUTO_RESOLVE_THRESHOLD, POINTS } from '../utils/constants';
 import '../utils/leafletSetup';
 import { hazardIcon } from '../utils/leafletSetup';
 
 const ReportDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { report, loading, fetchReport, deleteReport } = useReports();
+  const { report, loading, fetchReport, deleteReport, confirmReport } = useReports();
   const { user, isAuthenticated, isAdmin } = useAuth();
 
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   useEffect(() => {
     fetchReport(id);
@@ -39,6 +40,31 @@ const ReportDetail = () => {
       toast.error(getErrorMessage(err));
     }
   };
+
+  const handleConfirm = async (status) => {
+    setConfirmLoading(true);
+    try {
+      await confirmReport(id, status);
+      await fetchReport(id);
+      toast.success('Confirmation recorded');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setConfirmLoading(false);
+    }
+  };
+
+  const confirmations = report?.confirmations || [];
+  const stillExistsCount = confirmations.filter((c) => c.status === 'still_exists').length;
+  const resolvedCount = confirmations.filter((c) => c.status === 'resolved').length;
+  const userConfirmation = user
+    ? confirmations.find((c) => (c.user?._id || c.user) === user._id)
+    : null;
+  const canConfirm =
+    isAuthenticated &&
+    !isOwner &&
+    report?.status !== 'resolved' &&
+    report?.status !== 'dismissed';
 
   const getSeverityBadge = (severity) => {
     const opt = SEVERITY_OPTIONS.find((s) => s.value === severity);
@@ -161,6 +187,75 @@ const ReportDetail = () => {
           </div>
         )}
       </div>
+
+      {/* Community Confirmation */}
+      {canConfirm && (
+        <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6">
+          <h3 className="text-lg font-semibold text-gray-900">Community Verification</h3>
+          <p className="mt-1 text-sm text-gray-500">Has this hazard been resolved?</p>
+
+          <div className="mt-4 grid grid-cols-2 gap-4">
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-center">
+              <div className="flex items-center justify-center gap-1">
+                <HiExclamationTriangle className="h-5 w-5 text-amber-500" />
+                <span className="text-2xl font-bold text-amber-700">{stillExistsCount}</span>
+              </div>
+              <p className="mt-1 text-sm text-amber-600">Still Exists</p>
+            </div>
+            <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-center">
+              <div className="flex items-center justify-center gap-1">
+                <HiCheckCircle className="h-5 w-5 text-green-500" />
+                <span className="text-2xl font-bold text-green-700">{resolvedCount}</span>
+              </div>
+              <p className="mt-1 text-sm text-green-600">Resolved</p>
+            </div>
+          </div>
+
+          {resolvedCount > 0 && (
+            <div className="mt-4">
+              <div className="flex items-center justify-between text-xs text-gray-500">
+                <span>Auto-resolve progress</span>
+                <span>{resolvedCount} / {AUTO_RESOLVE_THRESHOLD}</span>
+              </div>
+              <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                <div
+                  className="h-full rounded-full bg-emerald-500 transition-all"
+                  style={{ width: `${Math.min((resolvedCount / AUTO_RESOLVE_THRESHOLD) * 100, 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="mt-4 flex gap-3">
+            <Button
+              variant={userConfirmation?.status === 'still_exists' ? 'primary' : 'outline'}
+              onClick={() => handleConfirm('still_exists')}
+              loading={confirmLoading}
+              disabled={confirmLoading}
+              className="flex-1"
+            >
+              Still Exists
+            </Button>
+            <Button
+              variant={userConfirmation?.status === 'resolved' ? 'primary' : 'outline'}
+              onClick={() => handleConfirm('resolved')}
+              loading={confirmLoading}
+              disabled={confirmLoading}
+              className="flex-1"
+            >
+              Mark Resolved
+            </Button>
+          </div>
+
+          {userConfirmation && (
+            <p className="mt-3 text-sm text-gray-600">
+              <HiCheckCircle className="mr-1 inline h-4 w-4 text-emerald-500" />
+              You confirmed: <span className="font-medium">{userConfirmation.status === 'still_exists' ? 'Still Exists' : 'Resolved'}</span>
+            </p>
+          )}
+          <p className="mt-1 text-xs text-gray-500">+{POINTS.REPORT_CONFIRMED} points for community verification</p>
+        </div>
+      )}
 
       <div className="mt-6">
         <Link to="/reports" className="text-sm text-emerald-600 hover:underline">

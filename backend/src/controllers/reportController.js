@@ -46,6 +46,19 @@ export const remove = async (req, res, next) => {
   }
 };
 
+export const confirm = async (req, res, next) => {
+  try {
+    const report = await reportService.confirm(
+      req.params.id,
+      req.user.userId,
+      req.body.status
+    );
+    ApiResponse.success(res, { report }, 'Report confirmation recorded');
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const updateStatus = async (req, res, next) => {
   try {
     const report = await reportService.updateStatus(
